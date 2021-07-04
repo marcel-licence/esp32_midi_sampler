@@ -15,7 +15,7 @@ uint32_t brightness = 4; /* I am using a low value to keep the LED's dark */
 
 #define VU_METER_DECREASE_MULTIPLIER 0.98f
 
-#define VU_METER_COUNT	8
+#define VU_METER_COUNT  8
 
 struct pixel_rgb
 {
@@ -85,6 +85,11 @@ void HSVtoRGB(int hue, int sat, int val, uint8_t colors[3])
             g = base;
             b = (((val - base) * (60 - (hue % 60))) / 60) + base;
             break;
+        default:
+            r = 0;
+            g = 0;
+            b = 0;
+            break;
         }
         colors[0] = r;
         colors[1] = g;
@@ -106,7 +111,7 @@ void VuMeter_Display(void)
     for (int i = 0; i < NUMPIXELS; i++)
     {
         int row = (i - (i % 8)) >> 3;
-        int col =  (i % 8);
+        int col = (i % 8);
 
         float dbVal = 0;
         if (vuMeterValueDisp[row] > 1.0f)
@@ -121,7 +126,7 @@ void VuMeter_Display(void)
         if (dbVal > col)
         {
             uint8_t colors[3];
-            float hue = 120.0f -  ((float)dbVal) * (120.0f / 8.0f); /* from green to red / min to max */
+            float hue = 120.0f - ((float)dbVal) * (120.0f / 8.0f);  /* from green to red / min to max */
             HSVtoRGB(hue, 255, brightness, colors);
 
             pixels[i].r = colors[0];
@@ -131,7 +136,9 @@ void VuMeter_Display(void)
         else
         {
             uint8_t colors[3];
-            float hue = 240.0f +  ((float)i) * (120.0f / 64.0f);
+#if 0 /* may be useful when doing some color effects */
+            float hue = 240.0f + ((float)i) * (120.0f / 64.0f);
+#endif
             HSVtoRGB(240, 255, brightness / 4, colors);
             pixels[i].r = colors[0];
             pixels[i].g = colors[1];

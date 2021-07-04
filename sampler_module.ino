@@ -13,26 +13,26 @@
 
 
 /* using exp release curve would never reach 0 a defined limit is required */
-#define AUDIBLE_LIMIT	(0.25f/32768.0f)
+#define AUDIBLE_LIMIT   (0.25f/32768.0f)
 
-#define SAMPLE_MAX_RECORDS	32
+#define SAMPLE_MAX_RECORDS  32
 
-#define NOTE_NORMAL	69 /* this is an a -> playback a with original recorded speed */
+#define NOTE_NORMAL 69 /* this is an a -> playback a with original recorded speed */
 
-#define SAMPLE_MAX_PLAYERS	8 /* max polyphony, higher values 'may' not be processed in time */
+#define SAMPLE_MAX_PLAYERS  8 /* max polyphony, higher values 'may' not be processed in time */
 
 /*
  * little helpers
  */
 #ifndef absf
-#define absf(a)	((a>=0.0f)?(a):(-a))
+#define absf(a) ((a>=0.0f)?(a):(-a))
 #endif
 
 #ifndef absI
-#define absI(a)	((a >= 0)?(a):(-a))
+#define absI(a) ((a >= 0)?(a):(-a))
 #endif
 
-#define maxI(a, b)	(a>b)?(a):(b)
+#define maxI(a, b)  (a>b)?(a):(b)
 
 enum samplStatusE
 {
@@ -125,7 +125,7 @@ float loop_end_f = 0;
 float loop_end_mul = 0.0f;
 
 float modulationDepth = 0.0f;
-float modulationSpeed = 5.0f;
+float modulationSpeed = 5.0f; // 7 maybe better?
 float modulationPitch = 1.0f;
 float pitchBendValue = 0.0f;
 
@@ -179,7 +179,7 @@ void Sampler_Init(void)
 float Modulation(void)
 {
     float modSpeed = modulationSpeed;
-    return modulationDepth * modulationPitch * (SineNorm((modSpeed * ((float)millis()) / 1000.0f )));
+    return modulationDepth * modulationPitch * (SineNorm((modSpeed * ((float)millis()) / 1000.0f)));
 }
 
 float FrequencyFromVoice(struct sample_record_s *const voice, float note)
@@ -192,7 +192,7 @@ float FrequencyFromVoice(struct sample_record_s *const voice, float note)
 #endif
 
     note += pitchBendValue + Modulation();
-    float f = ((pow(2.0f, note / 12.0f) ));  /* no frequency so dont use * 440.0f */
+    float f = ((pow(2.0f, note / 12.0f)));   /* no frequency so dont use * 440.0f */
     return f;
 }
 
@@ -251,11 +251,16 @@ void Sampler_Process(float *signal_l, float *signal_r, const int buffLen)
             }
 
             break;
+        case sampler_rec:
+        case sampler_recWait:
+        case sampler_idle:
+            /* no action */
+            break;
         }
 
         if (sampleStatus == sampler_recWait)
         {
-            if (  (inputMonoAbs > samplerThreshold))
+            if ((inputMonoAbs > samplerThreshold))
             {
                 Sampler_RecordStart();
                 inputMaxFiltered = 1.0f;
@@ -321,8 +326,6 @@ void Sampler_Process(float *signal_l, float *signal_r, const int buffLen)
 
             if (player->playing)
             {
-                uint32_t pos1 = player->pos;
-                uint32_t pos2 = player->pos + 1;
                 float f2 = player->pos_f;
                 float f1 = 1.0f - f2;
 
@@ -373,7 +376,7 @@ void Sampler_Process(float *signal_l, float *signal_r, const int buffLen)
 
                 /* stop playback when end has been reached */
                 /* stop playback when signal is not audible anymore */
-                if ((player->pos >= player->sample_rec->end ) || (player->adsr_gain < AUDIBLE_LIMIT))
+                if ((player->pos >= player->sample_rec->end) || (player->adsr_gain < AUDIBLE_LIMIT))
                 {
                     player->playing = false;
                     player->slow += sample_f;
@@ -435,7 +438,7 @@ void Sampler_StartSamplePlayer(struct sample_player_s *player, struct sample_rec
     Sampler_ProcessADSR(player);
 }
 
-void Sampler_NoteoOn(uint8_t ch, uint8_t note, float vel)
+void Sampler_NoteOn(uint8_t ch, uint8_t note, float vel)
 {
     if (sampleRecordCount == 0)
     {
@@ -460,9 +463,8 @@ void Sampler_NoteoOn(uint8_t ch, uint8_t note, float vel)
     }
     else
     {
-
         struct sample_player_s *freePlayer = getFreeSamplePlayer();
-        struct sample_record_s *rec = &sampleRecords[ch % sampleRecordCount];
+        struct sample_record_s *rec = &sampleRecords[(ch - 1) % sampleRecordCount]; /* decrease by one because we want to start with the first sample here */
 
         if (freePlayer != NULL)
         {
@@ -479,7 +481,7 @@ void Sampler_NoteoOn(uint8_t ch, uint8_t note, float vel)
     }
 }
 
-void Sampler_NoteoOff(uint8_t ch, uint8_t note)
+void Sampler_NoteOff(uint8_t ch, uint8_t note)
 {
     for (int i = 0; i < SAMPLE_MAX_PLAYERS; i++)
     {
@@ -689,7 +691,7 @@ void Sampler_LoopRemove(uint8_t index, float value)
 
 void Sampler_SetLoopEndMultiplier(uint8_t quarter, float value)
 {
-    int loop_end_mul_i = 1 + ((value ) * 127.0f); /* 128 octaves */
+    int loop_end_mul_i = 1 + ((value) * 127.0f);  /* 128 octaves */
     loop_end_mul = loop_end_mul_i;
     Sampler_UpdateLoopRange();
     if (lastActiveRec != NULL)
@@ -877,7 +879,7 @@ void Sampler_LoadPatch(uint8_t unused, float value)
 
         uint32_t newSampleLen = PatchManager_LoadPatch(&patchParam, &sampleStorage[sampleStorageInPos], sampleStorageLen - sampleStorageInPos);
 
-        if ((patchParam.version >= 0) && (newSampleLen > 0))
+        if (newSampleLen > 0)
         {
             struct sample_record_s *newPatch = &sampleRecords[sampleRecordCount];
             sampleRecordCount++;

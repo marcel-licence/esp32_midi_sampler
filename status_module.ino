@@ -17,7 +17,7 @@ uint32_t statusMsgShowTimer = 0; /*!< counter for timeout to reset top line */
 uint32_t currentFileShowTimer = 0;
 
 
-#define VU_MAX	24 /*!< character length of vu meter */
+#define VU_MAX  24 /*!< character length of vu meter */
 
 float statusVuLookup[VU_MAX]; /*!< precalculated lookup */
 
@@ -89,7 +89,9 @@ void Status_PrintVu(float *value, uint8_t vuMax)
 void Status_PrintAll(void)
 {
     char emptyLine[] = "                                ";
+#if 0 /* not used */
     char emptyLineMin[] = "                               ";
+#endif
     char emptyLineLong[] = "                                                                ";
     Serial.printf("\033[?25l");
     Serial.printf("\033[%d;%dH", 0, 0);
@@ -113,13 +115,13 @@ void Status_PrintAll(void)
 
     Serial.printf("--------------------------------\n");
     char memoryUsedMsg[64];
-    sprintf(memoryUsedMsg, "%d of %d bytes used\0", sampleStorageInPos, sampleStorageLen);
+    sprintf(memoryUsedMsg, "%d of %d bytes used", sampleStorageInPos, sampleStorageLen);
     Serial.printf("%s%s\n", memoryUsedMsg, &emptyLine[strlen(memoryUsedMsg)]);
 
     float relativeStorageUsage = ((float)sampleStorageInPos) / ((float)sampleStorageLen);
     for (int i = 0; i < 32; i++)
     {
-        if ( i == (int)(relativeStorageUsage * 32.0f))
+        if (i == (int)(relativeStorageUsage * 32.0f))
         {
             Serial.printf("O");
         }
@@ -138,6 +140,29 @@ void Status_PrintAll(void)
     Serial.println();
 
     Serial.printf("%s%s%s", emptyLine, currentFile, &emptyLineLong[strlen(currentFile)]);
+
+#ifdef STATUS_SHOW_BUTTON_TEXT
+    Status_ShowButtonText();
+#endif
+}
+
+uint8_t activeKey = 9;
+
+static char key[6][9] = {"Key1    ", "Key2    ", "Key3    ", "Key4    ", "Key5    ", "Key6    "};
+
+void Status_ShowButtonText()
+{
+
+
+    Serial.printf("\n--------------------------------\n");
+    Serial.printf("%s %s %s #####\n", key[0], key[2], key[4]);
+    Serial.printf("#### %s %s %s \n", key[1], key[3], key[5]);
+}
+
+void Status_SetKeyText(uint8_t keyId, const char *text)
+{
+    memset(key[keyId], ' ', 8);
+    memcpy(key[keyId], text, strlen(text)); /* just copy text without trailing zero */
 }
 
 void Status_Process_Sample(uint32_t inc)
@@ -181,7 +206,7 @@ void Status_Process(void)
 void Status_ValueChangedFloat(const char *descr, float value)
 {
     statusMsgShowTimer = 0;
-    sprintf(statusMsg, "%s: %0.3f\0", descr, value);
+    sprintf(statusMsg, "%s: %0.3f", descr, value);
     triggerTerminalOutput = true;
 }
 
@@ -191,7 +216,7 @@ void Status_ValueChangedFloat(const char *descr, float value)
 void Status_ValueChangedInt(const char *descr, int value)
 {
     statusMsgShowTimer = 0;
-    sprintf(statusMsg, "%s: %d\0", descr, value);
+    sprintf(statusMsg, "%s: %d", descr, value);
     triggerTerminalOutput = true;
 }
 
@@ -201,14 +226,14 @@ void Status_ValueChangedInt(const char *descr, int value)
 void Status_TestMsg(const char *text)
 {
     statusMsgShowTimer = 0;
-    sprintf(statusMsg, "%s\0", text);
+    sprintf(statusMsg, "%s", text);
     triggerTerminalOutput = true;
 }
 
 void Status_LogMessage(const char *text)
 {
     statusMsgShowTimer = 0;
-    sprintf(statusMsg, "%s\0", text);
+    sprintf(statusMsg, "%s", text);
     triggerTerminalOutput = true;
 }
 

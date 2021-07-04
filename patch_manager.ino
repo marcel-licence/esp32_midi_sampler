@@ -249,14 +249,12 @@ void PatchManager_SaveWavefile(fs::FS &fs, char *filename, int16_t *buffer, uint
 
     /* avoid watchdog */
     delay(1);
-    yield;
 
     f.write((uint8_t *)buffer, dataSizeOfbuffer);
     f.close();
 
     /* avoid watchdog */
     delay(1);
-    yield;
 }
 
 uint32_t PatchManager_LoadWavefile(fs::FS &fs, char *filename, int16_t *buffer, uint32_t bufferSize)
@@ -277,7 +275,6 @@ uint32_t PatchManager_LoadWavefile(fs::FS &fs, char *filename, int16_t *buffer, 
 
     /* avoid watchdog */
     delay(1);
-    yield;
 
     uint32_t bufferIn = 0;
 
@@ -332,7 +329,6 @@ uint32_t PatchManager_LoadWavefile(fs::FS &fs, char *filename, int16_t *buffer, 
 
     /* avoid watchdog */
     delay(1);
-    yield;
 
     return bufferIn / sizeof(int16_t);
 }
@@ -478,8 +474,8 @@ void PatchManager_CreateNewFileNames(fs::FS &fs)
 
     while (true)
     {
-        sprintf(wavNewFileName, "/samples/newSample%003d.wav", i);
-        sprintf(parNewFileName, "/samples/newSample%003d.bin", i);
+        sprintf(wavNewFileName, "/samples/newSample%03d.wav", i);
+        sprintf(parNewFileName, "/samples/newSample%03d.bin", i);
 
         if (fs.exists(wavNewFileName))
         {
@@ -501,7 +497,7 @@ void PatchManager_SaveNewPatch(union patchParam_u *patchParam, int16_t *buffer, 
 {
     if (patchManagerDest == patch_dest_sd_mmc)
     {
-        if (PatchManager_PrepareSdCard() )
+        if (PatchManager_PrepareSdCard())
         {
             PatchManager_CreateDir(SD_MMC, "/samples");
             PatchManager_CreateNewFileNames(SD_MMC);

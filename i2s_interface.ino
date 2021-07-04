@@ -45,8 +45,8 @@ bool i2s_write_sample_24ch2(uint8_t *sample)
 {
     static size_t bytes_written1 = 0;
     static size_t bytes_written2 = 0;
-    i2s_write((i2s_port_t)i2s_port_number, (const char *)&sample[1], 3, &bytes_written1, portMAX_DELAY);
-    i2s_write((i2s_port_t)i2s_port_number, (const char *)&sample[5], 3, &bytes_written2, portMAX_DELAY);
+    i2s_write(i2s_port_number, (const char *)&sample[1], 3, &bytes_written1, portMAX_DELAY);
+    i2s_write(i2s_port_number, (const char *)&sample[5], 3, &bytes_written2, portMAX_DELAY);
 
     if ((bytes_written1 + bytes_written2) > 0)
     {
@@ -93,7 +93,6 @@ bool i2s_write_stereo_samples(float *fl_sample, float *fr_sample)
     sampleDataU.ch[1] = int16_t(*fl_sample * 16383.0f);
 
     static size_t bytes_written = 0;
-    static size_t bytes_read = 0;
 
     i2s_write(i2s_port_number, (const char *)&sampleDataU.sample, 4, &bytes_written, portMAX_DELAY);
 
@@ -142,7 +141,6 @@ bool i2s_write_stereo_samples_buff(float *fl_sample, float *fr_sample, const int
     }
 
     static size_t bytes_written = 0;
-    static size_t bytes_read = 0;
 
     i2s_write(i2s_port_number, (const char *)&sampleDataU[0].sample, 4 * buffLen, &bytes_written, portMAX_DELAY);
 
@@ -158,9 +156,7 @@ bool i2s_write_stereo_samples_buff(float *fl_sample, float *fr_sample, const int
 
 void i2s_read_stereo_samples(float *fl_sample, float *fr_sample)
 {
-    static size_t bytes_written = 0;
     static size_t bytes_read = 0;
-
 
     static union
     {
@@ -183,7 +179,6 @@ void i2s_read_stereo_samples(float *fl_sample, float *fr_sample)
 
 void i2s_read_stereo_samples_buff(float *fl_sample, float *fr_sample, const int buffLen)
 {
-    static size_t bytes_written = 0;
     static size_t bytes_read = 0;
 
     static union
@@ -208,7 +203,6 @@ void i2s_read_stereo_samples_buff(float *fl_sample, float *fr_sample, const int 
 }
 
 
-#if 1
 i2s_config_t i2s_configuration =
 {
     .mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_TX | I2S_MODE_RX), // | I2S_MODE_DAC_BUILT_IN
@@ -220,37 +214,12 @@ i2s_config_t i2s_configuration =
     .bits_per_sample = I2S_BITS_PER_SAMPLE_16BIT, /* the DAC module will only take the 8bits from MSB */
 #endif
     .channel_format = I2S_CHANNEL_FMT_RIGHT_LEFT,
-    .communication_format = (i2s_comm_format_t)( I2S_COMM_FORMAT_I2S | I2S_COMM_FORMAT_I2S_MSB),
-    .intr_alloc_flags = 0, // default interrupt priority
-#if 0
-    .dma_buf_count = 2,
-    .dma_buf_len = 1024,
-#else
-    .dma_buf_count = 8,
-    .dma_buf_len = 64,
-#endif
-    .use_apll = 0
-};
-#else
-i2s_config_t i2s_configuration =
-{
-    .mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_TX ),
-    .sample_rate = SAMPLE_RATE,
-#ifdef I2S_NODAC
-    .bits_per_sample = I2S_BITS_PER_SAMPLE_32BIT,
-    .channel_format = I2S_CHANNEL_FMT_ONLY_LEFT,
-    .communication_format = (i2s_comm_format_t)I2S_COMM_FORMAT_I2S_MSB,
-#else
-    .bits_per_sample = I2S_BITS_PER_SAMPLE_32BIT,
-    .channel_format = I2S_CHANNEL_FMT_RIGHT_LEFT,
     .communication_format = (i2s_comm_format_t)(I2S_COMM_FORMAT_I2S | I2S_COMM_FORMAT_I2S_MSB),
-#endif
-    .intr_alloc_flags = 0,
+    .intr_alloc_flags = 0, // default interrupt priority
     .dma_buf_count = 8,
     .dma_buf_len = 64,
     .use_apll = 0
 };
-#endif
 
 
 i2s_pin_config_t pins =
