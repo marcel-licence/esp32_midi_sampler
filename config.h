@@ -37,7 +37,7 @@
 #ifdef ESP32_AUDIO_KIT
 
 /* on board led */
-#define LED_PIN     22 // IO19 -> D5, IO22 -> D4
+#define BLINK_LED_PIN     22 // IO19 -> D5, IO22 -> D4
 
 // set to pin connected to data input of WS8212 (NeoPixel) strip
 #define LED_STRIP_PIN         12
@@ -47,7 +47,21 @@
  * move R66-70 to R60-R64 (0 Ohm resistors, you can also put a solder bridge)
  * place at R55-R59 a 1.8k resistor
  */
-//#define AUDIO_KIT_BUTTON_ANALOG
+#define AUDIO_KIT_BUTTON_ANALOG
+
+//#define DISPLAY_160x80_ENABLED /* activate this when a 160x80 ST7735 compatible display is connected */
+
+#ifdef DISPLAY_160x80_ENABLED
+#define SCREEN_ENABLED
+
+
+#define TFT_MOSI    0
+#define TFT_SCLK    19
+#define TFT_CS        23
+#define TFT_RST       -1 // 5 // Or set to -1 and connect to Arduino RESET pin
+#define TFT_DC         21
+#define TFT_BLK_PIN 14  // do not connect it would cause the Audio Kit to get stuck
+#endif
 
 
 #else /* ESP32_AUDIO_KIT */
@@ -79,7 +93,7 @@
  */
 #ifdef ESP32_AUDIO_KIT
 #define MIDI_RX_PIN 18
-//#define MIDI_SERIAL2_BAUDRATE   115200
+#define MIDI_SERIAL2_BAUDRATE   115200
 #else
 #define MIDI_RX_PIN 16
 //#define TXD2 17

@@ -91,7 +91,7 @@ struct sample_player_s
 struct sample_record_s sampleRecords[SAMPLE_MAX_RECORDS];
 struct sample_player_s samplePlayers[SAMPLE_MAX_PLAYERS];
 
-
+void (*sampler_recordDoneCb)(void) = NULL;
 
 uint32_t sampleRecordCount = 0; /*!< count of samples in buffer and valid sampleRecords */
 uint32_t sampleStorageInPos = 0; /*!< next free sample in sampleStorage */
@@ -376,7 +376,7 @@ void Sampler_Process(float *signal_l, float *signal_r, const int buffLen)
 
                 /* stop playback when end has been reached */
                 /* stop playback when signal is not audible anymore */
-                if ((player->pos >= player->sample_rec->end) || (player->adsr_gain < AUDIBLE_LIMIT))
+                if ((player->pos >= player->sample_rec->end - 1) || (player->adsr_gain < AUDIBLE_LIMIT))
                 {
                     player->playing = false;
                     player->slow += sample_f;
@@ -510,6 +510,11 @@ void Sampler_RecordStop(void)
         lastActiveRec = &sampleRecords[sampleRecordCount - 1];
         Sampler_NormalizeActiveRecording(0, 1);
         lastActiveRec = tempRec;
+
+        if (sampler_recordDoneCb != NULL)
+        {
+            sampler_recordDoneCb();
+        }
     }
     else if (sampleStatus == sampler_recWait)
     {
@@ -740,8 +745,6 @@ void Sampler_RecordWait(uint8_t quarter, float value)
     }
 }
 
-
-
 void Sampler_ModulationWheel(uint8_t ch, float value)
 {
     modulationDepth = value;
@@ -773,7 +776,6 @@ void Sampler_Panic(uint8_t ch, float value)
         Status_TestMsg("Panic! All notes off...");
     }
 }
-
 
 void Sampler_NormalizeActiveRecording(uint8_t unused, float value)
 {
@@ -870,7 +872,6 @@ void Sampler_LoadPatchFile(const char *filename)
     Sampler_LoadPatch(0, 1);
 }
 
-
 void Sampler_LoadPatch(uint8_t unused, float value)
 {
     if (value > 0)
@@ -910,6 +911,13 @@ void Sampler_LoadPatch(uint8_t unused, float value)
             sampleStorageInPos += newSampleLen;
 
             Status_ValueChangedInt("Loaded sample",  newPatch->end -  newPatch->start);
+
+            /* select new recorded sample */
+            lastActiveRec = newPatch;
+        }
+        else
+        {
+            lastActiveRec = NULL;
         }
     }
 }
@@ -959,4 +967,8 @@ void Sampler_SetADSR_Sustain(uint8_t not_used, float value)
     }
 }
 
+void Sampler_SetRecordDoneCallback(void(*callback)(void))
+{
+    sampler_recordDoneCb = callback;
+}
 

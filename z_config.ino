@@ -10,7 +10,11 @@
  */
 
 #ifdef AUDIO_KIT_BUTTON_ANALOG
+#ifdef SCREEN_ENABLED
+audioKitButtonCb audioKitButtonCallback = Screen_ButtonCallback;
+#else
 audioKitButtonCb audioKitButtonCallback = App_ButtonCb;
+#endif
 #endif
 
 /*
@@ -82,7 +86,7 @@ struct midiControllerMapping edirolMapping[] =
     { 0x0, 0x12, "R9", NULL, Reverb_SetLevel, 0},
 
     /* Central slider */
-    { 0x0, 0x13, "H1", NULL, VuMeter_SetBrighness, 0},
+    { 0x0, 0x13, "H1", NULL, App_SetBrightness, 0},
 };
 
 struct midiMapping_s midiMapping =

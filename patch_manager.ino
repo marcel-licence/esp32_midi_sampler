@@ -97,6 +97,91 @@ void PatchManager_Init(void)
     /* nothing to do */
 }
 
+int PatchManager_GetFileList(fs::FS &fs, const char *dirname, void(*fileInd)(char *filename, int offset), int offset)
+{
+#ifdef PATCHMANAGER_DEBUG
+    Serial.printf("Listing directory: %s\n", dirname);
+#endif
+    File root = fs.open(dirname);
+    if (!root)
+    {
+        Status_LogMessage("Failed to open directory");
+        return 0;
+    }
+    if (!root.isDirectory())
+    {
+        Status_LogMessage("Not a directory");
+        return 0;
+    }
+
+    File file = root.openNextFile();
+
+
+    int foundFiles = 0;
+
+    while (file)
+    {
+        if (file.isDirectory())
+        {
+#if 0
+            Serial.print("  DIR : ");
+            Serial.println(file.name());
+#endif
+        }
+        else
+        {
+#if 0
+            Serial.printf("%03d - FILE: ", patch_selectedFileIndex);
+            Serial.print(file.name());
+            Serial.print("  SIZE: ");
+
+            Serial.println(file.size());
+#endif
+            strcpy(currentFileNameWav, file.name());
+            strcpy(currentFileNameBin, file.name());
+            strcpy(&currentFileNameBin[strlen(currentFileNameBin) - 3], "bin");
+
+            if (strcmp(".wav", &file.name()[strlen(file.name()) - 4]) == 0)
+            {
+#if 0
+                Serial.printf("ignore %s, %s\n", ".wav", &file.name()[strlen(file.name()) - 4]);
+#endif
+
+
+                if (offset > 0)
+                {
+                    offset--;
+                }
+                else
+                {
+                    fileInd(currentFileNameWav, foundFiles++);
+                }
+            }
+        }
+        file = root.openNextFile();
+    }
+    return foundFiles;
+}
+
+int PatchManager_GetFileListExt(void(*fileInd)(char *filename, int offset), int offset)
+{
+    if (patchManagerDest == patch_dest_sd_mmc)
+    {
+        if (PatchManager_PrepareSdCard())
+        {
+            return PatchManager_GetFileList(SD_MMC, "/samples", fileInd, offset);
+        }
+    }
+    else
+    {
+        if (PatchManager_PrepareLittleFs())
+        {
+            return PatchManager_GetFileList(LITTLEFS, "/samples", fileInd, offset);
+        }
+    }
+    return 0;
+}
+
 void PatchManager_FilenameFromIdx(fs::FS &fs, const char *dirname, uint8_t index)
 {
 #ifdef PATCHMANAGER_DEBUG
@@ -161,37 +246,38 @@ void PatchManager_FilenameFromIdx(fs::FS &fs, const char *dirname, uint8_t index
     patch_selectedFileIndex--;
 }
 
+char lastSelectedFile[128] = "";
+
 void PatchManager_UpdateFilename(void)
 {
     if (patchManagerDest == patch_dest_sd_mmc)
     {
         if (PatchManager_PrepareSdCard())
         {
-            char filename[128];
             PatchManager_FilenameFromIdx(SD_MMC, "/samples", patch_selectedFileIndex);
             SD_MMC.end();
 #ifdef PATCHMANAGER_DEBUG
             Serial.printf("Active file: %03d - %s\n", patch_selectedFileIndex, currentFileNameWav);
             Serial.printf("Active file: %03d - %s\n", patch_selectedFileIndex, currentFileNameBin);
 #endif
-            sprintf(filename, "SD_MMC: %s", currentFileNameWav);
-            Status_FileName(filename);
+            sprintf(lastSelectedFile, "SD_MMC: %s", currentFileNameWav);
+            Status_FileName(lastSelectedFile);
+            sprintf(lastSelectedFile, "%s", currentFileNameWav);
         }
     }
     else
     {
         if (PatchManager_PrepareLittleFs())
         {
-            char filename[128];
-
             PatchManager_FilenameFromIdx(LITTLEFS, "/samples", patch_selectedFileIndex);
             LITTLEFS.end();
 #ifdef PATCHMANAGER_DEBUG
             Serial.printf("Active file: %03d - %s\n", patch_selectedFileIndex, currentFileNameWav);
             Serial.printf("Active file: %03d - %s\n", patch_selectedFileIndex, currentFileNameBin);
 #endif
-            sprintf(filename, "LITTLEFS: %s", currentFileNameWav);
-            Status_FileName(filename);
+            sprintf(lastSelectedFile, "LITTLEFS: %s", currentFileNameWav);
+            Status_FileName(lastSelectedFile);
+            sprintf(lastSelectedFile, "%s", currentFileNameWav);
         }
     }
 }

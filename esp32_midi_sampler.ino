@@ -19,8 +19,23 @@
  * - patch selection
  * - save with automatic increment of number in filename
  * - display / vt100 terminal support
+ * - support of ST7735 160x80 compatible display -> update of Adafruit-ST7735-Library required
  *
  * Author: Marcel Licence
+ */
+
+/*
+ *
+ /$$$$$$$$                     /$$       /$$                 /$$$$$$$   /$$$$$$  /$$$$$$$   /$$$$$$  /$$      /$$ /$$ /$$
+| $$_____/                    | $$      | $$                | $$__  $$ /$$__  $$| $$__  $$ /$$__  $$| $$$    /$$$| $$| $$
+| $$       /$$$$$$$   /$$$$$$ | $$$$$$$ | $$  /$$$$$$       | $$  \ $$| $$  \__/| $$  \ $$| $$  \ $$| $$$$  /$$$$| $$| $$
+| $$$$$   | $$__  $$ |____  $$| $$__  $$| $$ /$$__  $$      | $$$$$$$/|  $$$$$$ | $$$$$$$/| $$$$$$$$| $$ $$/$$ $$| $$| $$
+| $$__/   | $$  \ $$  /$$$$$$$| $$  \ $$| $$| $$$$$$$$      | $$____/  \____  $$| $$__  $$| $$__  $$| $$  $$$| $$|__/|__/
+| $$      | $$  | $$ /$$__  $$| $$  | $$| $$| $$_____/      | $$       /$$  \ $$| $$  \ $$| $$  | $$| $$\  $ | $$
+| $$$$$$$$| $$  | $$|  $$$$$$$| $$$$$$$/| $$|  $$$$$$$      | $$      |  $$$$$$/| $$  | $$| $$  | $$| $$ \/  | $$ /$$ /$$
+|________/|__/  |__/ \_______/|_______/ |__/ \_______/      |__/       \______/ |__/  |__/|__/  |__/|__/     |__/|__/|__/
+
+
  */
 
 /*
@@ -114,8 +129,9 @@ void setup()
 
     click_supp_gain = 0.0f;
 
+#ifdef BLINK_LED_PIN
     Blink_Setup();
-
+#endif
     Status_Setup();
 
     ac101_setup();
@@ -194,6 +210,14 @@ inline
 void Core0TaskSetup()
 {
 
+#ifdef DISPLAY_160x80_ENABLED
+    Display_Setup();
+#ifdef SCREEN_ENABLED
+    Screen_Setup();
+#endif
+    App_SetBrightness(0, 0.25);
+#endif
+
     VuMeter_Init();
 }
 
@@ -202,6 +226,12 @@ void Core0TaskLoop()
 {
     Status_Process();
     VuMeter_Display();
+#ifdef SCREEN_ENABLED
+    Screen_Loop();
+#endif
+#ifdef DISPLAY_160x80_ENABLED
+    Display_Draw();
+#endif
 }
 
 void CoreTask0(void *parameter)
@@ -365,7 +395,9 @@ inline void audio_task()
  */
 void loop_1Hz(void)
 {
+#ifdef BLINK_LED_PIN
     Blink_Process();
+#endif
 }
 
 void loop_100Hz(void)
@@ -495,6 +527,9 @@ void App_ButtonCb(uint8_t key, uint8_t down)
         {
         case keyMode_storage:
             currentKeyMode = keyMode_record;
+#ifdef DISPLAY_160x80_ENABLED
+            Display_SetHeader("Record");
+#endif
             Status_LogMessage("Record");
 
             Status_SetKeyText(0, "1:select");
@@ -507,6 +542,9 @@ void App_ButtonCb(uint8_t key, uint8_t down)
             break;
         case keyMode_record:
             currentKeyMode = keyMode_playbackSample;
+#ifdef DISPLAY_160x80_ENABLED
+            Display_SetHeader("Sample playback");
+#endif
             Status_LogMessage("Sample playback");
 
             Status_SetKeyText(0, "1:select");
@@ -518,6 +556,9 @@ void App_ButtonCb(uint8_t key, uint8_t down)
             break;
         case keyMode_playbackSample:
             currentKeyMode = keyMode_playbackChrom;
+#ifdef DISPLAY_160x80_ENABLED
+            Display_SetHeader("Chromatic playback");
+#endif
             Status_LogMessage("Chromatic playback");
 
             Status_SetKeyText(0, "1:select");
@@ -530,6 +571,9 @@ void App_ButtonCb(uint8_t key, uint8_t down)
 
         case keyMode_playbackChrom:
             currentKeyMode = keyMode_storage;
+#ifdef DISPLAY_160x80_ENABLED
+            Display_SetHeader("Sample loader");
+#endif
             Status_LogMessage("Sample loader");
 
             Status_SetKeyText(0, "1:select");
@@ -617,3 +661,10 @@ void App_ButtonCb(uint8_t key, uint8_t down)
 
 #endif
 
+void App_SetBrightness(uint8_t unused, float value)
+{
+#ifdef DISPLAY_160x80_ENABLED
+    Display_SetBacklight(value * 255.0f);
+#endif
+    VuMeter_SetBrighness(unused, value / 8.0f);
+}
