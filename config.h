@@ -93,7 +93,7 @@
  */
 #ifdef ESP32_AUDIO_KIT
 #define MIDI_RX_PIN 18
-#define MIDI_SERIAL2_BAUDRATE   115200
+//#define MIDI_SERIAL2_BAUDRATE   115200 /* you can use this to change the serial speed */
 #else
 #define MIDI_RX_PIN 16
 //#define TXD2 17
