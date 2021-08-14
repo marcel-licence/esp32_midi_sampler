@@ -34,7 +34,20 @@ ref: https://hackaday.com/2017/01/20/cheating-at-5v-ws2812-control-to-use-a-3-3v
 
 MIDI should be connected to IO18  (you can modify the define MIDI_RX_PIN in config.h)
 
-A controller mapping can be found in z_config.ino. 
+AS5600 can be now used for scratching. To use it, set the define "AS5600_ENABLED" in config.h as active.
+The connection is defined below:
+- SDA: IO21
+- SCL: IO22
+Note: MIDI_RX_PIN changed from IO18 to IO19 on the ESP32 Audio Kit.
+In that case you can attach a 160x80 display but its connection will change to:
+- MOS: IO23
+- SCLK: IO18
+- CS: IO5
+- DC: IO0
+- RST -> should be connected to RST / EN of the ESP32
+
+
+A controller mapping can be found in z_config.ino.
 ---
 Keys can be used with only one IO by a little modification of the ESP32 Audio Kit (ref: https://youtu.be/r0af0DB1R68)
 - move R66-70 to R60-R64 (0 Ohm resistors, you can also put a solder bridge)
@@ -45,6 +58,9 @@ Finally the define AUDIO_KIT_BUTTON_ANALOG in config.h is required
 If you have questions or ideas please feel free to use the discussion area!
 
 ---
-External ressources:
+External resources:
 reverb_module.ino is a ported from stm32 code (src. https://github.com/YetAnotherElectronicsChannel/STM32_DSP_Reverb/blob/master/code/Src/main.c)
 A great video explaining the reverb can be found on his channel: https://youtu.be/nRLXNmLmHqM
+
+
+
