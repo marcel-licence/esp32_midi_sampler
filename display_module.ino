@@ -5,6 +5,10 @@
  *      Author: PC
  */
 
+#ifdef __CDT_PARSER__
+#include <cdt.h>
+#endif
+
 #ifdef DISPLAY_160x80_ENABLED
 
 #include <Adafruit_GFX.h>    // Core graphics library
@@ -41,6 +45,7 @@ struct screen_s main =
 };
 
 static char display_header[27];
+static char display_fulltext[27];
 
 volatile struct screen_s *activeScreen = &main;
 volatile struct screen_s *lastScreen = NULL;
@@ -67,6 +72,7 @@ void drawRGBBitmapP(int16_t x, int16_t y, PGM_VOID_P bitmap,
 void Display_Setup()
 {
     display_header[0] = 0;
+    display_fulltext[0] = 0;
 
     DispSpi.begin(TFT_SCLK, -1, TFT_MOSI);
 
@@ -181,27 +187,40 @@ void Display_Draw()
 #endif
     if (redraw)
     {
-        redraw = false;
+        if (display_fulltext[0] != 0)
         {
-            uint16_t bg = ST77XX_WHITE;
-            if (curSel == -1)
-            {
-                bg = ST77XX_GREEN;
-            }
-            testdrawtext(display_header, ST77XX_BLACK, bg);
+            tft.setTextSize(3);
+            testdrawtext(display_fulltext, ST77XX_BLACK, ST77XX_WHITE);
         }
-        tft.drawFastHLine(0, 11, tft.width(), 0);
+        else
+        {
+            {
+                uint16_t bg = ST77XX_WHITE;
+                if (curSel == -1)
+                {
+                    bg = ST77XX_GREEN;
+                }
+                testdrawtext(display_header, ST77XX_BLACK, bg);
+            }
+            tft.drawFastHLine(0, 11, tft.width(), 0);
 
-        for (int i = 0; i < 8; i++)
-        {
-            uint16_t bg = ST77XX_WHITE;
-            if (i == curSel)
+            for (int i = 0; i < 8; i++)
             {
-                bg = ST77XX_GREEN;
+                uint16_t bg = ST77XX_WHITE;
+                if (i == curSel)
+                {
+                    bg = ST77XX_GREEN;
+                }
+                testdrawtextline(display_line[i], ST77XX_BLACK, bg, i);
             }
-            testdrawtextline(display_line[i], ST77XX_BLACK, bg, i);
         }
+        redraw = false;
     }
+}
+
+bool Display_Busy()
+{
+    return redraw;
 }
 
 void Display_Redraw()
@@ -215,10 +234,19 @@ void Display_SetLine(int i, char *text)
     memcpy(display_line[i], text, strlen(text));
 }
 
+#define min(a,b)  ((a>b)?(b):(a))
+
 void Display_SetHeader(const char *headerText)
 {
     memset(display_header, ' ', 26);
-    memcpy(display_header, headerText, strlen(headerText));
+    memcpy(display_header, headerText, min(26, strlen(headerText)));
+    //lastScreen = NULL;
+}
+
+void Display_SetFullText(const char *headerText)
+{
+    memset(display_fulltext, ' ', 26);
+    memcpy(display_fulltext, headerText, min(26, strlen(headerText)));
     //lastScreen = NULL;
 }
 

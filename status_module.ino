@@ -207,9 +207,11 @@ void Status_ValueChangedFloat(const char *descr, float value)
 {
     statusMsgShowTimer = 0;
     sprintf(statusMsg, "%s: %0.3f", descr, value);
+#ifndef AS5600_ENABLED
     triggerTerminalOutput = true;
 #ifdef SCREEN_ENABLED
     Screen_Update();
+#endif
 #endif
 }
 
@@ -220,9 +222,11 @@ void Status_ValueChangedInt(const char *descr, int value)
 {
     statusMsgShowTimer = 0;
     sprintf(statusMsg, "%s: %d", descr, value);
+#ifndef AS5600_ENABLED
     triggerTerminalOutput = true;
 #ifdef SCREEN_ENABLED
     Screen_Update();
+#endif
 #endif
 }
 

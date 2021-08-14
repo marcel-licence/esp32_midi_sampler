@@ -4,12 +4,16 @@
  * Author: Marcel Licence
  */
 
+#ifdef __CDT_PARSER__
+#include <cdt.h>
+#endif
 
 /*
  * Instructions: http://myosuploads3.banggood.com/products/20210306/20210306011116instruction.pdf
  *
  * Schematic: https://docs.ai-thinker.com/_media/esp32-audio-kit_v2.2_sch.pdf
  */
+#ifdef ESP32_AUDIO_KIT
 
 #include "AC101.h" /* only compatible with forked repo: https://github.com/marcel-licence/AC101 */
 
@@ -58,8 +62,10 @@
  */
 #define PIN_KEY_ANALOG              (36)
 
-uint32_t keyMin[7] = {4095 - 32, 0, 462 - 32, 925 - 32, 1283 - 32, 1570 - 32, 1800 - 32 };
-uint32_t keyMax[7] = {4095 + 32, 0 + 32, 462 + 32, 925 + 32, 1283 + 32, 1570 + 32, 1800 + 32 };
+#define KEY_SETTLE_VAL  9 /* use higher value if anaog buton detection is unstable */
+
+uint32_t keyMin[7] = {4095 - 32, 0, 462 - 32, 925 - 32, 1283 - 32, 1570 - 32, 1800 - 32};
+uint32_t keyMax[7] = {4095 + 32, 0 + 32, 525 + 32, 1006 + 32, 1374 + 32, 1570 + 32, 1800 + 32 };
 #endif
 
 #define OUTPUT_PIN 0
@@ -149,8 +155,10 @@ void ac101_setup()
 #endif
 
     // Enable amplifier
+#if 0 /* amplifier only required when speakers attached? */
     pinMode(GPIO_PA_EN, OUTPUT);
     digitalWrite(GPIO_PA_EN, HIGH);
+#endif
 }
 
 /*
@@ -244,7 +252,7 @@ void button_loop()
         }
         if (newPressedKey != pressedKey)
         {
-            keySettle = 3;
+            keySettle = KEY_SETTLE_VAL;
             pressedKey = newPressedKey;
         }
     }
@@ -282,3 +290,6 @@ void button_loop()
     }
 #endif
 }
+
+#endif
+

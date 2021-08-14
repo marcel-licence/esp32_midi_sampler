@@ -37,7 +37,7 @@
 #ifdef ESP32_AUDIO_KIT
 
 /* on board led */
-#define BLINK_LED_PIN     22 // IO19 -> D5, IO22 -> D4
+//#define BLINK_LED_PIN     22 // IO19 -> D5, IO22 -> D4
 
 // set to pin connected to data input of WS8212 (NeoPixel) strip
 #define LED_STRIP_PIN         12
@@ -49,17 +49,37 @@
  */
 #define AUDIO_KIT_BUTTON_ANALOG
 
+//#define AS5600_ENABLED /* can be used for scratching */
+
 //#define DISPLAY_160x80_ENABLED /* activate this when a 160x80 ST7735 compatible display is connected */
+
+#ifdef AS5600_ENABLED
+#define I2C_SDA 21
+#define I2C_SCL 22
+
+#define I2C_SPEED 1000000
+#endif
 
 #ifdef DISPLAY_160x80_ENABLED
 #define SCREEN_ENABLED
 
-
+#ifndef AS5600_ENABLED /* this will conflict with I2C */
 #define TFT_MOSI    0
 #define TFT_SCLK    19
 #define TFT_CS        23
 #define TFT_RST       -1 // 5 // Or set to -1 and connect to Arduino RESET pin
 #define TFT_DC         21
+
+#else
+#define TFT_MOSI    23
+#define TFT_SCLK    18
+#define TFT_CS        5
+#define MCP_CS      5 // 15
+#define TFT_RST        -1 // Or set to -1 and connect to Arduino RESET pin
+#define TFT_DC         0 //12 is for SD usally, 21
+
+#endif
+
 #define TFT_BLK_PIN 14  // do not connect it would cause the Audio Kit to get stuck
 #endif
 
@@ -92,7 +112,11 @@
  * DIN MIDI Pinout
  */
 #ifdef ESP32_AUDIO_KIT
+#ifdef AS5600_ENABLED
+#define MIDI_RX_PIN 19
+#else
 #define MIDI_RX_PIN 18
+#endif
 //#define MIDI_SERIAL2_BAUDRATE   115200 /* you can use this to change the serial speed */
 #else
 #define MIDI_RX_PIN 16

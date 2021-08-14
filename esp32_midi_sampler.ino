@@ -20,6 +20,7 @@
  * - save with automatic increment of number in filename
  * - display / vt100 terminal support
  * - support of ST7735 160x80 compatible display -> update of Adafruit-ST7735-Library required
+ * - allows using the AS5600 for scratching
  *
  * Author: Marcel Licence
  */
@@ -45,6 +46,7 @@
  * - add tremolo
  * - modulation after time
  * - harmonics?
+ * - ignore other tags in wav files
  *
  * done:
  * - add wav saving to sd
@@ -63,6 +65,7 @@
  * - patch selection
  * - save with automatic increment
  * - display
+ * - simple scratching
  */
 
 #include "config.h"
@@ -73,7 +76,11 @@
 #include <SD_MMC.h>
 #include <WiFi.h>
 
+#ifdef AS5600_ENABLED
+#include <Wire.h>
+#endif
 
+#include "es_types.h"
 
 /*
  * use this to activate auto loading
@@ -127,6 +134,13 @@ void setup()
 
     Serial.printf("Firmware started successfully\n");
 
+#ifdef AS5600_ENABLED
+    //  digitalWrite(TFT_CS, HIGH);
+    //  pinMode(TFT_CS, OUTPUT);
+
+    Wire.setClock(I2C_SPEED);
+#endif
+
     click_supp_gain = 0.0f;
 
 #ifdef BLINK_LED_PIN
@@ -135,6 +149,14 @@ void setup()
     Status_Setup();
 
     ac101_setup();
+
+    /* using mic as default source */
+    ac101_setSourceMic();
+
+#ifdef AS5600_ENABLED
+    Wire.begin(I2C_SDA, I2C_SCL);
+    AS5600_Setup();
+#endif
 
     setup_i2s();
 
@@ -197,12 +219,14 @@ void setup()
     /* we need a second task for the terminal output */
     xTaskCreatePinnedToCore(CoreTask0, "CoreTask0", 8000, NULL, 999, &Core0TaskHnd, 0);
 
-    /* using mic as default source */
-    ac101_setSourceMic();
-
     /* use this to easily test the output */
-#if 0
+#if 1
     Sampler_NoteOn(0, 64, 1);
+#endif
+
+#ifdef AS5600_ENABLED
+    /* starts first loaded sample and activates this for scratching */
+    Sampler_SetScratchSample(0, 1);
 #endif
 }
 
@@ -225,7 +249,9 @@ inline
 void Core0TaskLoop()
 {
     Status_Process();
+#ifndef AS5600_ENABLED /* does not work together */
     VuMeter_Display();
+#endif
 #ifdef SCREEN_ENABLED
     Screen_Loop();
 #endif
@@ -398,6 +424,9 @@ void loop_1Hz(void)
 #ifdef BLINK_LED_PIN
     Blink_Process();
 #endif
+#if 0 /* use this line to to show analog button values to setup their values */
+    printf("ADC: %d\n", analogRead(36));
+#endif
 }
 
 void loop_100Hz(void)
@@ -417,12 +446,37 @@ void loop_100Hz(void)
     button_loop();
 }
 
+#ifdef AS5600_ENABLED
+inline
+void loop_4th()
+{
+#ifdef AS5600_ENABLED
+#ifdef DISPLAY_160x80_ENABLED
+    if (Display_Busy() == false)
+#endif
+    {
+        AS5600_Loop();
+        Sampler_SetPitchAbs(AS5600_GetPitch(4));
+    }
+#endif
+}
+#endif
+
 /*
  * this is the main loop
  */
 void loop()
 {
     audio_task(); /* audio tasks blocks for one sample -> 1/44100s */
+
+#ifdef AS5600_ENABLED
+    static uint32_t prec4 = 0;
+    prec4++;
+    if ((prec4 % 4) == 0)
+    {
+        loop_4th();
+    }
+#endif
 
     VuMeter_Process(); /* calculates slow falling bars */
 
@@ -516,6 +570,53 @@ enum keyMode_e
 };
 
 enum keyMode_e currentKeyMode = keyMode_playbackChrom;
+
+#ifdef AS5600_ENABLED
+
+uint8_t scratchNote = 0;
+
+void App_ButtonCbPlaySample(uint8_t key, uint8_t down)
+{
+    if (down > 0)
+    {
+        switch (key)
+        {
+        case 0:
+            scratchNote++;
+            Sampler_SetScratchSample(scratchNote, 1);
+            break;
+
+        case 1:
+            if (scratchNote > 0)
+            {
+                scratchNote--;
+            }
+            Sampler_SetScratchSample(scratchNote, 1);
+            break;
+        }
+    }
+    switch (key)
+    {
+    case 2:
+        delay(250); /* to avoid recording the noise of the button */
+        Sampler_RecordWait(0, down);
+        break;
+
+    case 3:
+        //Sampler_Record(0, down);
+        if (down > 0)
+        {
+            AS5600_SetPitchOffset(1.0f);
+        }
+        else
+        {
+            AS5600_SetPitchOffset(-100.0f);
+        }
+        break;
+    }
+}
+
+#else
 
 uint8_t lastCh = 1;
 
@@ -659,6 +760,7 @@ void App_ButtonCb(uint8_t key, uint8_t down)
     }
 }
 
+#endif
 #endif
 
 void App_SetBrightness(uint8_t unused, float value)

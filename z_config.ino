@@ -10,10 +10,14 @@
  */
 
 #ifdef AUDIO_KIT_BUTTON_ANALOG
+#ifdef AS5600_ENABLED
+audioKitButtonCb audioKitButtonCallback = App_ButtonCbPlaySample;
+#else
 #ifdef SCREEN_ENABLED
 audioKitButtonCb audioKitButtonCallback = Screen_ButtonCallback;
 #else
 audioKitButtonCb audioKitButtonCallback = App_ButtonCb;
+#endif
 #endif
 #endif
 
@@ -26,15 +30,19 @@ struct midiControllerMapping edirolMapping[] =
     /* transport buttons */
     { 0x8, 0x52, "back", NULL, Sampler_RecordWait, 0},
     { 0xD, 0x52, "stop", NULL, Sampler_Stop, 0},
-    { 0xe, 0x52, "start", NULL, NULL, 0},
-    { 0xe, 0x52, "start", NULL, NULL, 0},
+    { 0xe, 0x52, "start", NULL, Sampler_Play, 0},
     { 0xa, 0x52, "rec", NULL, Sampler_Record, 0},
 
     /* upper row of buttons */
     { 0x0, 0x50, "A1", NULL, Sampler_LoopUnlock, 0},
     { 0x1, 0x50, "A2", NULL, Sampler_LoopAll, 1},
+#ifdef AS5600_ENABLED
+    { 0x2, 0x50, "A3", NULL, Sampler_ScratchFader, 2},
+    { 0x3, 0x50, "A4", NULL, Sampler_SetScratchSample, 0xFF},
+#else
     { 0x2, 0x50, "A3", NULL, NULL, 2},
     { 0x3, 0x50, "A4", NULL, NULL, 3},
+#endif
 
     { 0x4, 0x50, "A5", NULL, PatchManager_SetDestination, 0},
     { 0x5, 0x50, "A6", NULL, PatchManager_SetDestination, 1},
@@ -46,7 +54,7 @@ struct midiControllerMapping edirolMapping[] =
     /* lower row of buttons */
     { 0x0, 0x51, "B1", NULL, Sampler_LoopLock, 0},
     { 0x1, 0x51, "B2", NULL, Sampler_LoopRemove, 1},
-    { 0x2, 0x51, "B3", NULL, NULL, 2},
+    { 0x2, 0x51, "B3", NULL, Sampler_Panic, 2},
     { 0x3, 0x51, "B4", NULL, Sampler_NormalizeActiveRecording, 3},
 
     { 0x4, 0x51, "B5", NULL, PatchManager_FileIdxInc, 0},
@@ -86,7 +94,11 @@ struct midiControllerMapping edirolMapping[] =
     { 0x0, 0x12, "R9", NULL, Reverb_SetLevel, 0},
 
     /* Central slider */
+#ifndef AS5600_ENABLED
     { 0x0, 0x13, "H1", NULL, App_SetBrightness, 0},
+#else
+    { 0x0, 0x13, "H1", NULL, Sampler_ScratchFader, 0},
+#endif
 };
 
 struct midiMapping_s midiMapping =

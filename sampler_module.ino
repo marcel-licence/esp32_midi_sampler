@@ -11,6 +11,9 @@
  * Author: Marcel Licence
  */
 
+#ifdef __CDT_PARSER__
+#include <cdt.h>
+#endif
 
 /* using exp release curve would never reach 0 a defined limit is required */
 #define AUDIBLE_LIMIT   (0.25f/32768.0f)
@@ -67,12 +70,14 @@ struct sample_record_s
     float decay;
     float sustain;
     float release;
+
+    char filename[64];
 };
 
 struct sample_player_s
 {
     struct sample_record_s *sample_rec;
-    uint32_t pos;
+    int32_t pos;
     float pos_f;
     float pitch;
     bool playing;
@@ -129,9 +134,20 @@ float modulationSpeed = 5.0f; // 7 maybe better?
 float modulationPitch = 1.0f;
 float pitchBendValue = 0.0f;
 
-
+#ifdef AS5600_ENABLED
+struct sample_record_s scratchRec;
+#endif
 
 struct sample_record_s *lastActiveRec = NULL;
+
+/*
+ * used for looped playback
+ */
+
+struct sample_player_s *beatPlayer = NULL;
+
+uint8_t sampler_lastCh = 0xFF;
+uint8_t sampler_lastNote = 0xFF;
 
 void Sampler_Init(void)
 {
@@ -274,6 +290,7 @@ void Sampler_Process(float *signal_l, float *signal_r, const int buffLen)
 
         if (sampleStatus == sampler_rec)
         {
+            static uint32_t recEndTimeout = 0;
             int16_t s16 = 0U;
             s16 += (int16_t)(((float)0x8000) * signal_l[n]);
             //s16 += (((float)0x8000) * signal_r[n]);
@@ -286,6 +303,15 @@ void Sampler_Process(float *signal_l, float *signal_r, const int buffLen)
             }
 
             if ((inputMaxFiltered < samplerThreshold) && (samplerManualRecord == false))
+            {
+                recEndTimeout ++;
+            }
+            else
+            {
+                recEndTimeout = 0;
+            }
+
+            if (recEndTimeout > 11025) /* record 250ms after signal went under the threshold */
             {
                 Status_TestMsg("Stopped by low threshold!");
                 Sampler_RecordStop();
@@ -351,7 +377,7 @@ void Sampler_Process(float *signal_l, float *signal_r, const int buffLen)
                 signal_r[n] += sample_f;
 
                 /* move to next sample */
-                uint32_t pitch_u = player->pitch;
+                int32_t pitch_u = player->pitch;
                 player->pos_f += player->pitch - pitch_u; /* does not work great when pos_f is bigger */
                 player->pos += pitch_u;
 
@@ -366,12 +392,20 @@ void Sampler_Process(float *signal_l, float *signal_r, const int buffLen)
                      * sampleLen = 34896
                      *
                      */
-                    if (player->pos - ((float)player->sample_rec->start) > player->sample_rec->loop_end)
+                    if (player->pos - ((float)player->sample_rec->start) >= player->sample_rec->loop_end)
                     {
                         uint32_t sampleLenU = sampleLen;
                         player->pos -= sampleLenU;
                         player->pos_f -= sampleLen - sampleLenU;
                     }
+#ifdef AS5600_ENABLED
+                    if (player->pos - ((float)player->sample_rec->start) < player->sample_rec->loop_start)
+                    {
+                        uint32_t sampleLenU = sampleLen;
+                        player->pos += sampleLenU;
+                        player->pos_f += sampleLen - sampleLenU;
+                    }
+#endif
                 }
 
                 /* stop playback when end has been reached */
@@ -438,16 +472,12 @@ void Sampler_StartSamplePlayer(struct sample_player_s *player, struct sample_rec
     Sampler_ProcessADSR(player);
 }
 
-void Sampler_NoteOn(uint8_t ch, uint8_t note, float vel)
+inline struct sample_player_s *Sampler_NoteOnInt(uint8_t ch, uint8_t note, float vel)
 {
-    if (sampleRecordCount == 0)
-    {
-        return;
-    }
-
+    struct sample_player_s *freePlayer = NULL;
     if (ch == 0)
     {
-        struct sample_player_s *freePlayer = getFreeSamplePlayer();
+        freePlayer = getFreeSamplePlayer();
         struct sample_record_s *rec = &sampleRecords[note % sampleRecordCount];
 
         if (freePlayer != NULL)
@@ -463,7 +493,7 @@ void Sampler_NoteOn(uint8_t ch, uint8_t note, float vel)
     }
     else
     {
-        struct sample_player_s *freePlayer = getFreeSamplePlayer();
+        freePlayer = getFreeSamplePlayer();
         struct sample_record_s *rec = &sampleRecords[(ch - 1) % sampleRecordCount]; /* decrease by one because we want to start with the first sample here */
 
         if (freePlayer != NULL)
@@ -479,6 +509,21 @@ void Sampler_NoteOn(uint8_t ch, uint8_t note, float vel)
             lastActiveRec = freePlayer->sample_rec;
         }
     }
+
+    return freePlayer;
+}
+
+void Sampler_NoteOn(uint8_t ch, uint8_t note, float vel)
+{
+    if (sampleRecordCount == 0)
+    {
+        return;
+    }
+
+    sampler_lastCh = ch;
+    sampler_lastNote = note;
+
+    (void *)Sampler_NoteOnInt(ch, note, vel);
 }
 
 void Sampler_NoteOff(uint8_t ch, uint8_t note)
@@ -576,10 +621,100 @@ void Sampler_Stop(uint8_t quarter, float value)
     {
         samplerManualRecord = false;
         Sampler_RecordStop();
+
+        if (beatPlayer != NULL)
+        {
+            Sampler_NoteOff(beatPlayer->ch, beatPlayer->note);
+        }
     }
 }
 
+void Sampler_Play(uint8_t unused, float value)
+{
+    if (value > 0)
+    {
+        if (sampler_lastCh != 0xFF)
+        {
+            struct sample_record_s *tempActiveRec = lastActiveRec;
+            beatPlayer = Sampler_NoteOnInt(sampler_lastCh, sampler_lastNote, 1);
+            lastActiveRec = tempActiveRec;
+        }
+    }
+}
 
+#ifdef AS5600_ENABLED
+struct sample_player_s *scratchPlayer = NULL;
+
+void Sampler_SetScratchSample(uint8_t selSample, float value)
+{
+    if (value > 0)
+    {
+        Sampler_NoteOff(0xEE, 0xEE);
+
+        if (selSample == 0xFF)
+        {
+            /* use last sample for scratching */
+            memcpy(&scratchRec, lastActiveRec, sizeof(scratchRec));
+        }
+        else
+        {
+            /* use selected sample for scratching */
+            memcpy(&scratchRec, &sampleRecords[selSample % sampleRecordCount], sizeof(scratchRec));
+        }
+
+        float sampleLen = (scratchRec.end - scratchRec.start);
+
+        scratchRec.loop_start = 0;
+        scratchRec.loop_end = sampleLen - 1;
+        scratchRec.release = 0;
+        scratchRec.pitch = 0;
+
+        {
+            scratchPlayer = getFreeSamplePlayer();
+            struct sample_record_s *rec = &scratchRec;
+
+            if (scratchPlayer != NULL)
+            {
+                Sampler_StartSamplePlayer(scratchPlayer, rec);
+
+                scratchPlayer->ch = 0xEE;
+                scratchPlayer->note = 0xEE;
+                scratchPlayer->velocity = 1;
+#ifdef DISPLAY_160x80_ENABLED
+                Display_SetFullText(scratchRec.filename);
+                Display_Redraw();
+#endif
+            }
+        }
+    }
+}
+
+void Sampler_ScratchFader(uint8_t unused, float value)
+{
+    float vol = /*1.0f -*/ value;
+    vol *= 5;
+    if (vol > 1)
+    {
+        vol = 1;
+    }
+    if (scratchPlayer != NULL)
+    {
+        scratchPlayer->velocity = vol;
+    }
+
+    vol = 1.0f - value;
+    vol *= 5;
+    if (vol > 1)
+    {
+        vol = 1;
+    }
+
+    if (beatPlayer != NULL)
+    {
+        beatPlayer->velocity = vol;
+    }
+}
+#endif
 
 void Sampler_LoopStartC(uint8_t quarter, float value)
 {
@@ -714,6 +849,13 @@ void Sampler_SetPitch(uint8_t quarter, float value)
     }
 }
 
+#ifdef AS5600_ENABLED
+void Sampler_SetPitchAbs(float value)
+{
+    scratchRec.pitch = value;
+}
+#endif
+
 void Sampler_UpdateLoopRange(void)
 {
     if (lastActiveRec != NULL)
@@ -771,9 +913,17 @@ void Sampler_Panic(uint8_t ch, float value)
 {
     for (int i = 0; i < SAMPLE_MAX_PLAYERS; i++)
     {
-        samplePlayers[i].pressed = false;
-        samplePlayers[i].playing = false;
-        Status_TestMsg("Panic! All notes off...");
+        if ((samplePlayers[i].ch != 0xEE) && (samplePlayers[i].note != 0xEE)) /* do not kill scratch sample */
+        {
+            if (samplePlayers[i].playing)
+            {
+                /* show information about stuck notes */
+                Serial.printf("KillNote %d\n", i);
+            }
+            samplePlayers[i].pressed = false;
+            samplePlayers[i].playing = false;
+            Status_TestMsg("Panic! All notes off...");
+        }
     }
 }
 
@@ -847,7 +997,7 @@ void Sampler_SavePatch(uint8_t quarter, float value)
     {
         if (lastActiveRec != NULL)
         {
-            union patchParam_u patchParam;
+            struct patchParam_s patchParam;
             memset(&patchParam, 0, sizeof(patchParam));
             patchParam.version = 1;
 
@@ -876,7 +1026,7 @@ void Sampler_LoadPatch(uint8_t unused, float value)
 {
     if (value > 0)
     {
-        union patchParam_u patchParam;
+        struct patchParam_s patchParam;
 
         uint32_t newSampleLen = PatchManager_LoadPatch(&patchParam, &sampleStorage[sampleStorageInPos], sampleStorageLen - sampleStorageInPos);
 
@@ -885,6 +1035,7 @@ void Sampler_LoadPatch(uint8_t unused, float value)
             struct sample_record_s *newPatch = &sampleRecords[sampleRecordCount];
             sampleRecordCount++;
 
+            memcpy(newPatch->filename, patchParam.filename, sizeof(newPatch->filename));
 
             newPatch->pitch = patchParam.patchParamV0.pitch;
             newPatch->loop_start = patchParam.patchParamV0.loop_start;

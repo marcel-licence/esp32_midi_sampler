@@ -16,6 +16,13 @@
 
 const i2s_port_t i2s_port_number = I2S_NUM_0;
 
+/*
+ * please refer to https://www.hackster.io/janost/audio-hacking-on-the-esp8266-fa9464#toc-a-simple-909-drum-synth-0
+ * for the following implementation
+ */
+#ifdef I2S_NODAC
+
+#else
 
 bool i2s_write_sample_32ch2(uint8_t *sample);
 
@@ -62,7 +69,13 @@ bool i2s_write_sample_24ch2(uint8_t *sample)
 
 bool i2s_write_stereo_samples(float *fl_sample, float *fr_sample)
 {
-
+#ifdef SAMPLE_SIZE_32BIT
+    static union sampleTUNT
+    {
+        uint64_t sample;
+        int32_t ch[2];
+    } sampleDataU;
+#endif
 #ifdef SAMPLE_SIZE_24BIT
 #if 0
     static union sampleTUNT
@@ -89,12 +102,23 @@ bool i2s_write_stereo_samples(float *fl_sample, float *fr_sample)
     /*
      * using RIGHT_LEFT format
      */
-    sampleDataU.ch[0] = int16_t(*fr_sample * 16383.0f);
+#ifdef SAMPLE_SIZE_16BIT
+    sampleDataU.ch[0] = int16_t(*fr_sample * 16383.0f); /* some bits missing here */
     sampleDataU.ch[1] = int16_t(*fl_sample * 16383.0f);
+#endif
+#ifdef SAMPLE_SIZE_32BIT
+    sampleDataU.ch[0] = int32_t(*fr_sample * 1073741823.0f); /* some bits missing here */
+    sampleDataU.ch[1] = int32_t(*fl_sample * 1073741823.0f);
+#endif
 
     static size_t bytes_written = 0;
 
+#ifdef SAMPLE_SIZE_16BIT
     i2s_write(i2s_port_number, (const char *)&sampleDataU.sample, 4, &bytes_written, portMAX_DELAY);
+#endif
+#ifdef SAMPLE_SIZE_32BIT
+    i2s_write(i2s_port_number, (const char *)&sampleDataU.sample, 8, &bytes_written, portMAX_DELAY);
+#endif
 
     if (bytes_written > 0)
     {
@@ -108,6 +132,13 @@ bool i2s_write_stereo_samples(float *fl_sample, float *fr_sample)
 
 bool i2s_write_stereo_samples_buff(float *fl_sample, float *fr_sample, const int buffLen)
 {
+#ifdef SAMPLE_SIZE_32BIT
+    static union sampleTUNT
+    {
+        uint64_t sample;
+        int32_t ch[2];
+    } sampleDataU[SAMPLE_BUFFER_SIZE];
+#endif
 #ifdef SAMPLE_SIZE_24BIT
 #if 0
     static union sampleTUNT
@@ -136,8 +167,14 @@ bool i2s_write_stereo_samples_buff(float *fl_sample, float *fr_sample, const int
         /*
          * using RIGHT_LEFT format
          */
-        sampleDataU[n].ch[0] = int16_t(fr_sample[n] * 16383.0f);
+#ifdef SAMPLE_SIZE_16BIT
+        sampleDataU[n].ch[0] = int16_t(fr_sample[n] * 16383.0f); /* some bits missing here */
         sampleDataU[n].ch[1] = int16_t(fl_sample[n] * 16383.0f);
+#endif
+#ifdef SAMPLE_SIZE_32BIT
+        sampleDataU[n].ch[0] = int32_t(fr_sample[n] * 1073741823.0f); /* some bits missing here */
+        sampleDataU[n].ch[1] = int32_t(fl_sample[n] * 1073741823.0f);
+#endif
     }
 
     static size_t bytes_written = 0;
@@ -202,11 +239,35 @@ void i2s_read_stereo_samples_buff(float *fl_sample, float *fr_sample, const int 
     }
 }
 
+#endif
+
+/*
+ * i2s configuration
+ */
+
+#ifdef ESP32_AUDIO_KIT
+#define I2S_BCLK_PIN IIS_SCLK
+#define I2S_WCLK_PIN IIS_LCLK
+#define I2S_DOUT_PIN IIS_DSIN
+#define I2S_DIN_PIN IIS_DSOUT
+#endif
 
 i2s_config_t i2s_configuration =
 {
+#ifdef I2S_DIN_PIN
     .mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_TX | I2S_MODE_RX), // | I2S_MODE_DAC_BUILT_IN
+#else
+    .mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_TX),
+#endif
     .sample_rate = SAMPLE_RATE,
+#ifdef I2S_NODAC
+    .bits_per_sample = I2S_BITS_PER_SAMPLE_32BIT,
+    .channel_format = I2S_CHANNEL_FMT_ONLY_LEFT,
+    .communication_format = (i2s_comm_format_t)I2S_COMM_FORMAT_I2S_MSB,
+#else
+#ifdef SAMPLE_SIZE_32BIT
+    .bits_per_sample = I2S_BITS_PER_SAMPLE_32BIT, /* the DAC module will only take the 8bits from MSB */
+#endif
 #ifdef SAMPLE_SIZE_24BIT
     .bits_per_sample = I2S_BITS_PER_SAMPLE_24BIT, /* the DAC module will only take the 8bits from MSB */
 #endif
@@ -215,6 +276,7 @@ i2s_config_t i2s_configuration =
 #endif
     .channel_format = I2S_CHANNEL_FMT_RIGHT_LEFT,
     .communication_format = (i2s_comm_format_t)(I2S_COMM_FORMAT_I2S | I2S_COMM_FORMAT_I2S_MSB),
+#endif
     .intr_alloc_flags = 0, // default interrupt priority
     .dma_buf_count = 8,
     .dma_buf_len = 64,
@@ -222,14 +284,27 @@ i2s_config_t i2s_configuration =
 };
 
 
+#ifdef I2S_NODAC
 i2s_pin_config_t pins =
 {
-    .bck_io_num = IIS_SCLK,
-    .ws_io_num =  IIS_LCLK,
-    .data_out_num = IIS_DSIN,
-    .data_in_num = IIS_DSOUT
+    .bck_io_num = I2S_PIN_NO_CHANGE,
+    .ws_io_num =  I2S_PIN_NO_CHANGE,
+    .data_out_num = I2S_NODAC_OUT_PIN,
+    .data_in_num = I2S_PIN_NO_CHANGE
 };
-
+#else
+i2s_pin_config_t pins =
+{
+    .bck_io_num = I2S_BCLK_PIN,
+    .ws_io_num =  I2S_WCLK_PIN,
+    .data_out_num = I2S_DOUT_PIN,
+#ifdef I2S_DIN_PIN
+    .data_in_num = I2S_DIN_PIN
+#else
+    .data_in_num = I2S_PIN_NO_CHANGE
+#endif
+};
+#endif
 
 void setup_i2s()
 {

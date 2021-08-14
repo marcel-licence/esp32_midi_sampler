@@ -38,17 +38,21 @@ struct patchParamV1_s
     float release;
 };
 
-union patchParam_u
+struct patchParam_s
 {
-    struct
+    union
     {
-        uint32_t version;
+        struct
+        {
+            uint32_t version;
 
-        struct patchParamV0_s patchParamV0;
-        struct patchParamV1_s patchParamV1;
+            struct patchParamV0_s patchParamV0;
+            struct patchParamV1_s patchParamV1;
 
+        };
+        uint8_t buffer[512]; /*! raw data */
     };
-    uint8_t buffer[512]; /*! raw data */
+    char filename[64];
 };
 
 /*
@@ -483,7 +487,7 @@ bool PatchManager_PrepareLittleFs(void)
     return true;
 }
 
-void PatchManager_SavePatchParam(fs::FS &fs, char *filename, union patchParam_u *patchParam)
+void PatchManager_SavePatchParam(fs::FS &fs, char *filename, struct patchParam_s *patchParam)
 {
     File f = fs.open(filename, FILE_WRITE);
     if (!f)
@@ -497,7 +501,7 @@ void PatchManager_SavePatchParam(fs::FS &fs, char *filename, union patchParam_u 
     f.close();
 }
 
-void PatchManager_LoadPatchParam(fs::FS &fs, char *filename, union patchParam_u *patchParam)
+void PatchManager_LoadPatchParam(fs::FS &fs, char *filename, struct patchParam_s *patchParam)
 {
     File f = fs.open(filename, FILE_READ);
     if (!f)
@@ -579,7 +583,7 @@ void PatchManager_CreateNewFileNames(fs::FS &fs)
     }
 }
 
-void PatchManager_SaveNewPatch(union patchParam_u *patchParam, int16_t *buffer, int bufferSize)
+void PatchManager_SaveNewPatch(struct patchParam_s *patchParam, int16_t *buffer, int bufferSize)
 {
     if (patchManagerDest == patch_dest_sd_mmc)
     {
@@ -622,7 +626,7 @@ void PatchManager_SetFilename(const char *filename)
     strcpy(&currentFileNameBin[strlen(currentFileNameBin) - 3], "bin");
 }
 
-uint32_t PatchManager_LoadPatch(union patchParam_u *patchParam, int16_t *buffer, int bufferSize)
+uint32_t PatchManager_LoadPatch(struct patchParam_s *patchParam, int16_t *buffer, int bufferSize)
 {
     memset(patchParam, 0, sizeof(*patchParam));
 
@@ -658,6 +662,8 @@ uint32_t PatchManager_LoadPatch(union patchParam_u *patchParam, int16_t *buffer,
 #endif
         }
     }
+
+    memcpy(patchParam->filename, currentFileNameBin, sizeof(patchParam->filename));
 
     return readBufferBytes;
 }
