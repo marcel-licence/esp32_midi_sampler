@@ -330,11 +330,13 @@ void Sampler_Process(float *signal_l, float *signal_r, const int buffLen)
 #ifdef SAMPLER_PASS_TROUGH_DURING_RECORD
         if (sampleStatus == sampler_idle)
 #endif
+#ifndef SAMPLER_ALWAYS_PASS_THROUGH
         {
             /* make quiet to prepare for next step */
             signal_l[n] = 0.0f;
             signal_r[n] = 0.0f;
         }
+#endif
     }
 
     for (int i = 0; i < SAMPLE_MAX_PLAYERS; i++)

@@ -60,7 +60,9 @@
  * - insert R60-R64 (0 Ohm or solder bridge)
  * - insert R55-R59 using 1.8kOhm (recommended but other values might be possible with tweaking the code)
  */
+#ifndef PIN_KEY_ANALOG
 #define PIN_KEY_ANALOG              (36)
+#endif
 
 #define KEY_SETTLE_VAL  9 /* use higher value if anaog buton detection is unstable */
 

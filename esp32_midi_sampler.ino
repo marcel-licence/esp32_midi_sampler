@@ -80,7 +80,6 @@
 #include <Wire.h>
 #endif
 
-#include "es_types.h"
 
 /*
  * use this to activate auto loading
@@ -148,10 +147,13 @@ void setup()
 #endif
     Status_Setup();
 
+#ifdef ES8388_ENABLED
+    ES8388_Setup();
+#else
     ac101_setup();
-
     /* using mic as default source */
     ac101_setSourceMic();
+#endif
 
 #ifdef AS5600_ENABLED
     Wire.begin(I2C_SDA, I2C_SCL);
@@ -233,7 +235,6 @@ void setup()
 inline
 void Core0TaskSetup()
 {
-
 #ifdef DISPLAY_160x80_ENABLED
     Display_Setup();
 #ifdef SCREEN_ENABLED

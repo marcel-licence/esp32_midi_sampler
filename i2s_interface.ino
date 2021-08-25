@@ -4,6 +4,10 @@
  * Author: Marcel Licence
  */
 
+#ifdef __CDT_PARSER__
+#include <cdt.h>
+#endif
+
 #include <driver/i2s.h>
 
 
@@ -218,24 +222,28 @@ void i2s_read_stereo_samples_buff(float *fl_sample, float *fr_sample, const int 
 {
     static size_t bytes_read = 0;
 
+#ifdef SAMPLE_SIZE_16BIT
     static union
     {
         uint32_t sample;
         int16_t ch[2];
     } sampleData[SAMPLE_BUFFER_SIZE];
+#endif
 
-    i2s_read(i2s_port_number, (char *)&sampleData[0].sample, 4 * SAMPLE_BUFFER_SIZE, &bytes_read, portMAX_DELAY);
+    i2s_read(i2s_port_number, (char *)&sampleData[0].sample, 4 * buffLen, &bytes_read, portMAX_DELAY);
 
     //sampleData.ch[0] &= 0xFFFE;
     //sampleData.ch[1] &= 0;
 
-    for (int n = 0; n < SAMPLE_BUFFER_SIZE; n++)
+    for (int n = 0; n < buffLen; n++)
     {
         /*
          * using RIGHT_LEFT format
          */
-        fr_sample[n] = ((float)sampleData[n].ch[0] * (5.5f / 65535.0f));
-        fl_sample[n] = ((float)sampleData[n].ch[1] * (5.5f / 65535.0f));
+        //fr_sample[n] = ((float)sampleData[n].ch[0] * (5.5f / 65535.0f));
+        //fl_sample[n] = ((float)sampleData[n].ch[1] * (5.5f / 65535.0f));
+        fr_sample[n] = ((float)sampleData[n].ch[0] / (16383.0f));
+        fl_sample[n] = ((float)sampleData[n].ch[1] / (16383.0f));
     }
 }
 
@@ -246,10 +254,20 @@ void i2s_read_stereo_samples_buff(float *fl_sample, float *fr_sample, const int 
  */
 
 #ifdef ESP32_AUDIO_KIT
+
+#ifndef ES8388_ENABLED
 #define I2S_BCLK_PIN IIS_SCLK
 #define I2S_WCLK_PIN IIS_LCLK
 #define I2S_DOUT_PIN IIS_DSIN
 #define I2S_DIN_PIN IIS_DSOUT
+#else
+#define I2S_MCLK_PIN ES8388_PIN_MCLK
+#define I2S_BCLK_PIN ES8388_PIN_SCLK
+#define I2S_WCLK_PIN ES8388_PIN_LRCK
+#define I2S_DOUT_PIN ES8388_PIN_DIN
+#define I2S_DIN_PIN ES8388_PIN_DOUT
+#endif
+
 #endif
 
 i2s_config_t i2s_configuration =
@@ -280,7 +298,11 @@ i2s_config_t i2s_configuration =
     .intr_alloc_flags = 0, // default interrupt priority
     .dma_buf_count = 8,
     .dma_buf_len = 64,
-    .use_apll = 0
+#ifdef ES8388_ENABLED
+    .use_apll = true,
+#else
+    .use_apll = false,
+#endif
 };
 
 
@@ -312,4 +334,8 @@ void setup_i2s()
     i2s_set_pin(I2S_NUM_0, &pins);
     i2s_set_sample_rates(i2s_port_number, SAMPLE_RATE);
     i2s_start(i2s_port_number);
+#ifdef ES8388_ENABLED
+    REG_WRITE(PIN_CTRL, 0xFFFFFFF0);
+    PIN_FUNC_SELECT(PERIPHS_IO_MUX_GPIO0_U, FUNC_GPIO0_CLK_OUT1);
+#endif
 }
