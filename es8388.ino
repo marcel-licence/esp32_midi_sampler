@@ -150,6 +150,8 @@ void es8388_read_all()
 
 void ES8388_SetADCVOL(uint8_t unused, float vol)
 {
+    Status_ValueChangedInt("ADC Volume /db", (vol - 1) * 97 + 0.5);
+
     vol *= -192;
     vol += 192;
 
@@ -166,6 +168,8 @@ void ES8388_SetADCVOL(uint8_t unused, float vol)
 
 void ES8388_SetDACVOL(uint8_t unused, float vol)
 {
+    Status_ValueChangedInt("DAC Volume /db", (vol - 1) * 97 + 0.5);
+
     vol *= -192;
     vol += 192;
 
@@ -182,6 +186,8 @@ void ES8388_SetDACVOL(uint8_t unused, float vol)
 
 void ES8388_SetPGAGain(uint8_t unused, float vol)
 {
+    Status_ValueChangedInt("PGA Gain /db", vol * 24 + 0.25);
+
     vol *= 8;
 
     uint8_t volu8 = vol;
@@ -217,6 +223,8 @@ void ES8388_SetInputCh(uint8_t ch, float var)
         }
         // ES8388_ADCCONTROL2
         ES8388_WriteReg(0x0A, (in << 6) + (in << 4)); // LINSEL , RINSEL , DSSEL , DSR
+
+        Status_ValueChangedInt("ADC Ch", in);
     }
 }
 
@@ -248,11 +256,15 @@ void ES8388_SetMixInCh(uint8_t ch, float var)
         }
         // ES8388_DACCONTROL16
         ES8388_WriteReg(0x26, in + (in << 3)); // LMIXSEL, RMIXSEL
+
+        Status_ValueChangedInt("Mix In Ch", in);
     }
 }
 
 void ES8388_SetIn2OoutVOL(uint8_t unused, float vol)
 {
+    Status_ValueChangedInt("In to out volume /db", (vol - 1) * 16 + 0.5);
+
     vol *= -5;
     vol += 7;
 
@@ -290,6 +302,8 @@ void ES8388_SetIn2OoutVOL(uint8_t unused, float vol)
 
 void ES8388_SetOUT1VOL(uint8_t unused, float vol)
 {
+    Status_ValueChangedInt("OUT1VOL /db", (vol - 1) * 31 + 0.5);
+
     vol *= 0x1E;
 
     uint8_t volu8 = vol;
@@ -305,6 +319,8 @@ void ES8388_SetOUT1VOL(uint8_t unused, float vol)
 
 void ES8388_SetOUT2VOL(uint8_t unused, float vol)
 {
+    Status_ValueChangedInt("OUT2VOL /db", (vol - 1) * 31 + 0.5);
+
     vol *= 0x1E;
 
     uint8_t volu8 = vol;
