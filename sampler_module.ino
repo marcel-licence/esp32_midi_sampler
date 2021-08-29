@@ -118,7 +118,7 @@ float samplerThreshold = 0.02f;
 float inputMonoAbs = 0.0f;
 float inputMaxFiltered = 0;
 
-
+uint32_t lastIn = 0;
 
 bool loop_param_lock = false; /*!< ignore changes of loop start/end when set to true - required for nervous MIDI controllers */
 
@@ -389,12 +389,12 @@ void Sampler_Process(float *signal_l, float *signal_r, const int buffLen)
 
                 if (player->pressed)
                 {
-                    float sampleLen = player->sample_rec->loop_end - player->sample_rec->loop_start;
+                    float sampleLen = player->sample_rec->loop_end - player->sample_rec->loop_start + 1;
                     /*
                      * sampleLen = 34896
                      *
                      */
-                    if (player->pos - ((float)player->sample_rec->start) >= player->sample_rec->loop_end)
+                    if (player->pos - ((float)player->sample_rec->start) >= (player->sample_rec->loop_end))
                     {
                         uint32_t sampleLenU = sampleLen;
                         player->pos -= sampleLenU;
@@ -412,7 +412,7 @@ void Sampler_Process(float *signal_l, float *signal_r, const int buffLen)
 
                 /* stop playback when end has been reached */
                 /* stop playback when signal is not audible anymore */
-                if ((player->pos >= player->sample_rec->end - 1) || (player->adsr_gain < AUDIBLE_LIMIT))
+                if ((player->pos > player->sample_rec->end) || (player->adsr_gain < AUDIBLE_LIMIT))
                 {
                     player->playing = false;
                     player->slow += sample_f;
@@ -1061,6 +1061,7 @@ void Sampler_LoadPatch(uint8_t unused, float value)
             newPatch->start = sampleStorageInPos;
             newPatch->end = newPatch->start + newSampleLen;
             newPatch->valid = true;
+            lastIn = sampleStorageInPos;
             sampleStorageInPos += newSampleLen;
 
             Status_ValueChangedInt("Loaded sample",  newPatch->end -  newPatch->start);
@@ -1124,4 +1125,35 @@ void Sampler_SetRecordDoneCallback(void(*callback)(void))
 {
     sampler_recordDoneCb = callback;
 }
+
+void Sampler_AddSection(float pitch_keycenter, uint32_t  offset, uint32_t  end, uint32_t  loop_start, uint32_t loop_end, const char *soundName)
+{
+    struct sample_record_s *newPatch = &sampleRecords[sampleRecordCount];
+    sampleRecordCount++;
+
+    memcpy(newPatch->filename, soundName, sizeof(soundName));
+
+    newPatch->pitch = ((pow(2.0f, (69.0f - ((float)pitch_keycenter)) / 12.0f)));
+    newPatch->start = lastIn + offset;
+    newPatch->end = lastIn + end;
+
+    if ((offset ==  loop_start) && (end == (loop_end + 1)))
+    {
+        newPatch->loop_start = 0;
+        newPatch->loop_end = 0xFFFFFFFF;
+    }
+    else
+    {
+        newPatch->loop_start = loop_start - offset;
+        newPatch->loop_end = loop_end - offset;
+    }
+
+    newPatch->sustain = 1;
+    newPatch->attack = 1;
+    newPatch->decay = 1;
+    newPatch->release = 0.99;
+
+    newPatch->valid = true;
+}
+
 

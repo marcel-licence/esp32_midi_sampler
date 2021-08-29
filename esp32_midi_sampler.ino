@@ -205,8 +205,6 @@ void setup()
     vuOutL = VuMeter_GetPtr(6);
     vuOutR = VuMeter_GetPtr(7);
 
-    Delay_SetInputLevel(0, 0.5);
-    Delay_SetLevel(0, 0.75);
 #ifdef AUTO_LOAD_PATCHES_FROM_LITTLEFS
     /* finally we can preload some data if available */
     PatchManager_SetDestination(0, 1);
