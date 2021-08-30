@@ -74,7 +74,7 @@ uint32_t keyMax[7] = {4095 + 32, 0 + 32, 525 + 32, 1006 + 32, 1374 + 32, 1570 + 
 #define MCLK_CH 0
 #define PWM_BIT 1
 
-AC101 ac;
+static AC101 ac;
 
 /* actually only supporting 16 bit */
 #define SAMPLE_SIZE_16BIT

@@ -147,12 +147,14 @@ void setup()
 #endif
     Status_Setup();
 
+#ifdef ESP32_AUDIO_KIT
 #ifdef ES8388_ENABLED
     ES8388_Setup();
 #else
     ac101_setup();
     /* using mic as default source */
     ac101_setSourceMic();
+#endif
 #endif
 
 #ifdef AS5600_ENABLED
@@ -179,8 +181,10 @@ void setup()
     WiFi.mode(WIFI_OFF);
 #endif
 
+#ifndef ESP8266
     btStop();
     // esp_wifi_deinit();
+#endif
 
     Delay_Init();
     Delay_Reset();

@@ -12,6 +12,8 @@
 #ifndef CONFIG_H_
 #define CONFIG_H_
 
+#define SAMPLER_ALWAYS_PASS_THROUGH /* can be used to pass line in through audio processing to output */
+
 /* enable the following to get a vt100 compatible output which can be displayed for example with teraterm pro */
 //#define VT100_ENABLED
 
@@ -20,6 +22,7 @@
 
 /* use following when you are using the esp32 audio kit v2.2 */
 #define ESP32_AUDIO_KIT /* project has not been tested on other hardware, modify on own risk */
+//#define ES8388_ENABLED /* use this if the Audio Kit is equipped with ES8388 instead of the AC101 */
 
 /* this will force using const velocity for all notes, remove this to get dynamic velocity */
 //#define MIDI_USE_CONST_VELOCITY
@@ -53,12 +56,19 @@
 
 //#define DISPLAY_160x80_ENABLED /* activate this when a 160x80 ST7735 compatible display is connected */
 
+#ifdef ES8388_ENABLED
+/* i2c shared with codec */
+#define I2C_SDA 18
+#define I2C_SCL 23
+#else
+
 #ifdef AS5600_ENABLED
 #define I2C_SDA 21
 #define I2C_SCL 22
-
-#define I2C_SPEED 1000000
 #endif
+
+#endif
+#define I2C_SPEED 1000000
 
 #ifdef DISPLAY_160x80_ENABLED
 #define SCREEN_ENABLED
@@ -115,7 +125,11 @@
 #ifdef AS5600_ENABLED
 #define MIDI_RX_PIN 19
 #else
+#ifdef ES8388_ENABLED
+#define MIDI_RX_PIN 19
+#else
 #define MIDI_RX_PIN 18
+#endif
 #endif
 //#define MIDI_SERIAL2_BAUDRATE   115200 /* you can use this to change the serial speed */
 #else

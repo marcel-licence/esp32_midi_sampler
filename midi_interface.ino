@@ -4,6 +4,9 @@
  * Author: Marcel Licence
  */
 
+#ifdef __CDT_PARSER__
+#include <cdt.h>
+#endif
 
 /*
  * look for midi interface using 1N136

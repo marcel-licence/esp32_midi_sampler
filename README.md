@@ -62,5 +62,14 @@ External resources:
 reverb_module.ino is a ported from stm32 code (src. https://github.com/YetAnotherElectronicsChannel/STM32_DSP_Reverb/blob/master/code/Src/main.c)
 A great video explaining the reverb can be found on his channel: https://youtu.be/nRLXNmLmHqM
 
+Specifications and datasheets:
+---
 
+ESP32-A1S (AC101 variant): https://www.makerfabs.com/desfile/files/ESP32-A1S%20Product%20Specification.pdf
+ESP32-A1S (ES8388 variant): https://github.com/marcel-licence/esp32_midi_sampler/files/7075076/esp32-a1s_v2.3_specification.pdf
+AC101 user manual: http://www.x-powers.com/en.php/Info/down/id/96
+ES8388 datasheet: http://www.everest-semi.com/pdf/ES8388%20DS.pdf
+ES8388 user guide: https://dl.radxa.com/rock2/docs/hw/ds/ES8388%20user%20Guide.pdf
 
+# Derived projects
+If you like please let me know if you want to get your project listed here which is based on the esp32_midi_sampler project.
