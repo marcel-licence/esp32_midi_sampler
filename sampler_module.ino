@@ -24,6 +24,8 @@
 
 #define SAMPLE_MAX_PLAYERS  8 /* max polyphony, higher values 'may' not be processed in time */
 
+#define MAX_FILENAME_LENGTH	64
+
 /*
  * little helpers
  */
@@ -71,7 +73,7 @@ struct sample_record_s
     float sustain;
     float release;
 
-    char filename[64];
+    char filename[MAX_FILENAME_LENGTH];
 };
 
 struct sample_player_s
@@ -1131,7 +1133,8 @@ void Sampler_AddSection(float pitch_keycenter, uint32_t  offset, uint32_t  end, 
     struct sample_record_s *newPatch = &sampleRecords[sampleRecordCount];
     sampleRecordCount++;
 
-    memcpy(newPatch->filename, soundName, sizeof(soundName));
+    memset(newPatch->filename, 0, MAX_FILENAME_LENGTH);
+    memcpy(newPatch->filename, soundName, strnlen(soundName, MAX_FILENAME_LENGTH));
 
     newPatch->pitch = ((pow(2.0f, (69.0f - ((float)pitch_keycenter)) / 12.0f)));
     newPatch->start = lastIn + offset;
