@@ -121,6 +121,8 @@ float *vuInR;
 float *vuOutL;
 float *vuOutR;
 
+extern uint32_t sampleRecordCount;
+
 /* this application starts here */
 void setup()
 {
