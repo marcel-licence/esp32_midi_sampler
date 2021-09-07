@@ -12,7 +12,7 @@
 #ifndef CONFIG_H_
 #define CONFIG_H_
 
-#define SAMPLER_ALWAYS_PASS_THROUGH /* can be used to pass line in through audio processing to output */
+//#define SAMPLER_ALWAYS_PASS_THROUGH /* can be used to pass line in through audio processing to output */
 
 /* enable the following to get a vt100 compatible output which can be displayed for example with teraterm pro */
 //#define VT100_ENABLED
