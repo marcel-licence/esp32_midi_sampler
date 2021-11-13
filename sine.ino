@@ -1,6 +1,4 @@
 /*
- * The GNU GENERAL PUBLIC LICENSE (GNU GPLv3)
- *
  * Copyright (c) 2021 Marcel Licence
  *
  * This program is free software: you can redistribute it and/or modify
@@ -37,10 +35,10 @@
  * Author: Marcel Licence
  */
 
-#define SINE_BIT	8UL
-#define SINE_CNT	(1<<SINE_BIT)
-#define SINE_MSK	((1<<SINE_BIT)-1)
-#define SINE_I(i)	((i) >> (32 - SINE_BIT)) /* & SINE_MSK */
+#define SINE_BIT    8UL
+#define SINE_CNT    (1<<SINE_BIT)
+#define SINE_MSK    ((1<<SINE_BIT)-1)
+#define SINE_I(i)   ((i) >> (32 - SINE_BIT)) /* & SINE_MSK */
 
 
 float *sine = NULL;

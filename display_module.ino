@@ -1,6 +1,4 @@
 /*
- * The GNU GENERAL PUBLIC LICENSE (GNU GPLv3)
- *
  * Copyright (c) 2021 Marcel Licence
  *
  * This program is free software: you can redistribute it and/or modify
@@ -30,12 +28,14 @@
  * Programm erhalten haben. Wenn nicht, siehe <https://www.gnu.org/licenses/>.
  */
 
-/*
- * display_module.ino
+/**
+ * @file display_module.ino
+ * @author Marcel Licence
+ * @date 23.06.2021
  *
- *  Created on: 23.06.2021
- *      Author: Marcel Licence
+ * @brief  this file includes some implementation to drive a display (experimental code)
  */
+
 
 #ifdef __CDT_PARSER__
 #include <cdt.h>

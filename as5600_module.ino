@@ -1,6 +1,4 @@
 /*
- * The GNU GENERAL PUBLIC LICENSE (GNU GPLv3)
- *
  * Copyright (c) 2021 Marcel Licence
  *
  * This program is free software: you can redistribute it and/or modify
@@ -30,14 +28,15 @@
  * Programm erhalten haben. Wenn nicht, siehe <https://www.gnu.org/licenses/>.
  */
 
-/*
- * as5600_module.ino
+/**
+ * @file as5600_module.ino
+ * @author Marcel Licence
+ * @date 25.07.2021
  *
- *  Created on: 25.07.2021
- *      Author: Marcel Licence
- *
- *      Datasheet: https://ams.com/documents/20143/36005/AS5600_DS000365_5-00.pdf
+ * @brief  Implementation to use the AS5600 for scratching via I2C
+ * @see https://ams.com/documents/20143/36005/AS5600_DS000365_5-00.pdf
  */
+
 
 #ifdef __CDT_PARSER__
 #include <cdt.h>
@@ -92,7 +91,7 @@ uint16_t AS5600_ReadReg_u16(uint8_t reg)
     return (((uint16_t)Wire.read()) << 8) + (uint16_t)Wire.read();
 }
 
-#define REG_CONF 		0x07
+#define REG_CONF        0x07
 #define REG_RAW_ANLGE   0x0C
 
 void AS5600_Setup()

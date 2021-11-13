@@ -1,6 +1,4 @@
 /*
- * The GNU GENERAL PUBLIC LICENSE (GNU GPLv3)
- *
  * Copyright (c) 2021 Marcel Licence
  *
  * This program is free software: you can redistribute it and/or modify
@@ -139,9 +137,6 @@
  *
  */
 
-/* our samplerate */
-#define SAMPLE_RATE 44100
-
 /* this is used to add a task to core 0 */
 TaskHandle_t  Core0TaskHnd ;
 
@@ -197,9 +192,9 @@ void setup()
 #endif
 
     setup_i2s();
-
+#ifdef ESP32_AUDIO_KIT
     button_setup();
-
+#endif
     Sine_Init();
 
     Reverb_Setup();
@@ -237,7 +232,6 @@ void setup()
     Serial.printf("Total PSRAM: %d\n", ESP.getPsramSize());
     Serial.printf("Free PSRAM: %d\n", ESP.getFreePsram());
 
-
     vuInL = VuMeter_GetPtr(0);
     vuInR = VuMeter_GetPtr(1);
     vuOutL = VuMeter_GetPtr(6);
@@ -257,7 +251,7 @@ void setup()
 #endif
 
     /* we need a second task for the terminal output */
-    xTaskCreatePinnedToCore(CoreTask0, "CoreTask0", 8000, NULL, 999, &Core0TaskHnd, 0);
+    xTaskCreatePinnedToCore(Core0Task, "Core0Task", 8000, NULL, 999, &Core0TaskHnd, 0);
 
     /* use this to easily test the output */
 #if 1
@@ -299,7 +293,7 @@ void Core0TaskLoop()
 #endif
 }
 
-void CoreTask0(void *parameter)
+void Core0Task(void *parameter)
 {
     Core0TaskSetup();
 
@@ -334,13 +328,17 @@ void App_ToggleSource(uint8_t channel, float value)
         {
         case acSrcLine:
             click_supp_gain = 0.0f;
+#ifdef AC101_ENABLED
             ac101_setSourceMic();
+#endif
             selSource = acSrcMic;
             Status_TestMsg("Input: Microphone");
             break;
         case acSrcMic:
             click_supp_gain = 0.0f;
+#ifdef AC101_ENABLED
             ac101_setSourceLine();
+#endif
             selSource = acSrcLine;
             Status_TestMsg("Input: LineIn");
             break;
@@ -360,7 +358,6 @@ void App_SetOutputLevel(uint8_t not_used, float value)
 static float fl_offset = 0.0f;
 static float fr_offset = 0.0f;
 
-#define SAMPLE_BUFFER_SIZE  64
 
 static float fl_sample[SAMPLE_BUFFER_SIZE];
 static float fr_sample[SAMPLE_BUFFER_SIZE];
@@ -482,7 +479,9 @@ void loop_100Hz(void)
     /*
      * Put your functions here which should be called 100 times a second
      */
+#ifdef ESP32_AUDIO_KIT
     button_loop();
+#endif
 }
 
 #ifdef AS5600_ENABLED

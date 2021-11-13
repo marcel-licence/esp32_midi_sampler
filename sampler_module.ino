@@ -1,6 +1,4 @@
 /*
- * The GNU GENERAL PUBLIC LICENSE (GNU GPLv3)
- *
  * Copyright (c) 2021 Marcel Licence
  *
  * This program is free software: you can redistribute it and/or modify
@@ -56,7 +54,7 @@
 
 #define SAMPLE_MAX_PLAYERS  8 /* max polyphony, higher values 'may' not be processed in time */
 
-#define MAX_FILENAME_LENGTH	64
+#define MAX_FILENAME_LENGTH 64
 
 /*
  * little helpers
@@ -1190,5 +1188,4 @@ void Sampler_AddSection(float pitch_keycenter, uint32_t  offset, uint32_t  end, 
 
     newPatch->valid = true;
 }
-
 

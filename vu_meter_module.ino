@@ -1,6 +1,4 @@
 /*
- * The GNU GENERAL PUBLIC LICENSE (GNU GPLv3)
- *
  * Copyright (c) 2021 Marcel Licence
  *
  * This program is free software: you can redistribute it and/or modify
@@ -30,13 +28,23 @@
  * Programm erhalten haben. Wenn nicht, siehe <https://www.gnu.org/licenses/>.
  */
 
-/*
- * This module is only to calculate the vu-meters and drive the ws2812 8x8 led module​
+/**
+ * @file vu_meter_module.ino
+ * @author Marcel Licence
+ * @date 25.04.2021
  *
- * Author: Marcel Licence
- *
+ * @brief  This module is only to calculate the vu-meters and drive the ws2812 8x8 led module​
  * Credits for HSVtoRGB function is unknown
  */
+
+
+
+#define VU_METER_COUNT  8
+
+#define VU_METER_DECREASE_MULTIPLIER 0.98f
+
+
+#ifdef LED_STRIP_PIN
 
 #include <Adafruit_NeoPixel.h>
 
@@ -45,9 +53,9 @@ uint32_t brightness = 4; /* I am using a low value to keep the LED's dark */
 /* pixel count of the 8x8 module */
 #define NUMPIXELS   (8*8)
 
-#define VU_METER_DECREASE_MULTIPLIER 0.98f
 
-#define VU_METER_COUNT  8
+
+
 
 struct pixel_rgb
 {
@@ -58,6 +66,7 @@ Adafruit_NeoPixel strip = Adafruit_NeoPixel(NUMPIXELS, LED_STRIP_PIN,
                           NEO_GRB + NEO_KHZ800);
 
 struct pixel_rgb pixels[NUMPIXELS] = {0};
+#endif
 
 /* 2 storages to allow double buffering */
 float vuMeterValueInBf[VU_METER_COUNT];
@@ -65,8 +74,10 @@ float vuMeterValueDisp[VU_METER_COUNT];
 
 void VuMeter_Init(void)
 {
+#ifdef LED_STRIP_PIN
     strip.begin();
     strip.show();
+#endif
     VuMeter_Process();
 }
 
@@ -140,6 +151,7 @@ void VuMeter_Process(void)
 
 void VuMeter_Display(void)
 {
+#ifdef LED_STRIP_PIN
     for (int i = 0; i < NUMPIXELS; i++)
     {
         int row = (i - (i % 8)) >> 3;
@@ -180,6 +192,7 @@ void VuMeter_Display(void)
         strip.setPixelColor(i, pixels[i].r, pixels[i].g, pixels[i].b);
     }
     strip.show();
+#endif
 }
 
 float *VuMeter_GetPtr(uint8_t index)
@@ -193,5 +206,8 @@ float *VuMeter_GetPtr(uint8_t index)
 
 void VuMeter_SetBrighness(uint8_t unused, float value)
 {
+#ifdef LED_STRIP_PIN
     brightness = (value * 255.0f);
+#endif
 }
+

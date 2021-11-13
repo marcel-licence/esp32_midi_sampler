@@ -1,6 +1,4 @@
 /*
- * The GNU GENERAL PUBLIC LICENSE (GNU GPLv3)
- *
  * Copyright (c) 2021 Marcel Licence
  *
  * This program is free software: you can redistribute it and/or modify
@@ -30,31 +28,41 @@
  * Programm erhalten haben. Wenn nicht, siehe <https://www.gnu.org/licenses/>.
  */
 
-/*
- * config.h
+/**
+ * @file config.h
+ * @author Marcel Licence
+ * @date 12.05.2021
+ *
+ * @brief This file contains the project configuration
+ *
+ * All definitions are visible in the entire project
  *
  * Put all your project settings here (defines, numbers, etc.)
  * configurations which are requiring knowledge of types etc.
  * shall be placed in z_config.ino (will be included at the end)
- *
- *  Created on: 12.05.2021
- *      Author: Marcel Licence
  */
+
 
 #ifndef CONFIG_H_
 #define CONFIG_H_
 
-//#define SAMPLER_ALWAYS_PASS_THROUGH /* can be used to pass line in through audio processing to output */
+
+#define BOARD_ML_V1 /* activate this when using the ML PCB V1 */
+//#define BOARD_ESP32_AUDIO_KIT_AC101 /* activate this when using the ESP32 Audio Kit v2.2 with the AC101 codec */
+//#define BOARD_ESP32_AUDIO_KIT_ES8388 /* activate this when using the ESP32 Audio Kit v2.2 with the ES8388 codec */
+//#define BOARD_ESP32_DOIT /* activate this when using the DOIT ESP32 DEVKIT V1 board */
+
+/* can be used to pass line in through audio processing to output */
+//#define AUDIO_PASS_THROUGH
+
+/* this changes latency but also speed of processing */
+#define SAMPLE_BUFFER_SIZE 64
 
 /* enable the following to get a vt100 compatible output which can be displayed for example with teraterm pro */
 //#define VT100_ENABLED
 
 /* following can be activated to output the key function in the status output */
 #define STATUS_SHOW_BUTTON_TEXT
-
-/* use following when you are using the esp32 audio kit v2.2 */
-#define ESP32_AUDIO_KIT /* project has not been tested on other hardware, modify on own risk */
-//#define ES8388_ENABLED /* use this if the Audio Kit is equipped with ES8388 instead of the AC101 */
 
 /* this will force using const velocity for all notes, remove this to get dynamic velocity */
 //#define MIDI_USE_CONST_VELOCITY
@@ -66,16 +74,32 @@
  */
 #define MIDI_RECV_FROM_SERIAL
 
-/* activate MIDI via USB */
+/* activate MIDI via USB (not implemented in this project) */
 //#define MIDI_VIA_USB_ENABLED
 
+//#define AS5600_ENABLED /* can be used for scratching */
+#define I2C_SPEED 1000000
+
+/*
+ * include the board configuration
+ * there you will find the most hardware depending pin settings
+ */
+#ifdef BOARD_ML_V1
+#include "./boards/board_ml_v1.h"
+#elif (defined BOARD_ESP32_AUDIO_KIT_AC101)
+#include "./boards/board_audio_kit_ac101.h"
+#elif (defined BOARD_ESP32_AUDIO_KIT_ES8388)
+#include "./boards/board_audio_kit_es8388.h"
+#elif (defined BOARD_ESP32_DOIT)
+#include "./boards/board_esp32_doit.h"
+#else
+/* there is room left for other configurations */
+#endif
+
+/*
+ * Some additional stuff when using the audio kit
+ */
 #ifdef ESP32_AUDIO_KIT
-
-/* on board led */
-//#define BLINK_LED_PIN     22 // IO19 -> D5, IO22 -> D4
-
-// set to pin connected to data input of WS8212 (NeoPixel) strip
-#define LED_STRIP_PIN         12
 
 /*
  * use the following when you've modified the audio kit like shown in video: https://youtu.be/r0af0DB1R68
@@ -84,23 +108,10 @@
  */
 #define AUDIO_KIT_BUTTON_ANALOG
 
-//#define AS5600_ENABLED /* can be used for scratching */
 
 //#define DISPLAY_160x80_ENABLED /* activate this when a 160x80 ST7735 compatible display is connected */
 
-#ifdef ES8388_ENABLED
-/* i2c shared with codec */
-#define I2C_SDA 18
-#define I2C_SCL 23
-#else
 
-#ifdef AS5600_ENABLED
-#define I2C_SDA 21
-#define I2C_SCL 22
-#endif
-
-#endif
-#define I2C_SPEED 1000000
 
 #ifdef DISPLAY_160x80_ENABLED
 #define SCREEN_ENABLED
@@ -125,49 +136,7 @@
 #define TFT_BLK_PIN 14  // do not connect it would cause the Audio Kit to get stuck
 #endif
 
-
-#else /* ESP32_AUDIO_KIT */
-
-/* on board led */
-#define LED_PIN     2
-
-/*
- * Define and connect your PINS to DAC here
- */
-
-#ifdef I2S_NODAC
-#define I2S_NODAC_OUT_PIN   22  /* noisy sound without DAC, add capacitor in series! */
-#else
-/*
- * pins to connect a real DAC like PCM5201
- */
-#define I2S_BCLK_PIN    25
-#define I2S_WCLK_PIN    27
-#define I2S_DOUT_PIN    26
-#endif
-
-
-
 #endif /* ESP32_AUDIO_KIT */
-
-/*
- * DIN MIDI Pinout
- */
-#ifdef ESP32_AUDIO_KIT
-#ifdef AS5600_ENABLED
-#define MIDI_RX_PIN 19
-#else
-#ifdef ES8388_ENABLED
-#define MIDI_RX_PIN 19
-#else
-#define MIDI_RX_PIN 18
-#endif
-#endif
-//#define MIDI_SERIAL2_BAUDRATE   115200 /* you can use this to change the serial speed */
-#else
-#define MIDI_RX_PIN 16
-//#define TXD2 17
-#endif
 
 
 /*
@@ -177,10 +146,10 @@
 #define SAMPLE_RATE 44100
 #define SAMPLE_SIZE_16BIT
 #else
-#define SAMPLE_RATE 48000
-#define SAMPLE_SIZE_32BIT
+#define SAMPLE_RATE 44100
+#define SAMPLE_SIZE_16BIT
 #endif
 
 
-
 #endif /* CONFIG_H_ */
+
