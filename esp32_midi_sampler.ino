@@ -55,6 +55,10 @@
  * Author: Marcel Licence
  */
 
+#ifdef __CDT_PARSER__
+#include <cdt.h>
+#endif
+
 /*
  *
  /$$$$$$$$                     /$$       /$$                 /$$$$$$$   /$$$$$$  /$$$$$$$   /$$$$$$  /$$      /$$ /$$ /$$
@@ -110,6 +114,10 @@
 #include <Wire.h>
 #endif
 
+/* requires the ml_Synth library */
+#include <ml_arp.h>
+#include <ml_midi_ctrl.h>
+
 
 /*
  * use this to activate auto loading
@@ -137,8 +145,6 @@
  *
  */
 
-/* this is used to add a task to core 0 */
-TaskHandle_t  Core0TaskHnd ;
 
 /* to avoid the high click when turning on the microphone */
 static float click_supp_gain = 0.0f;
@@ -204,6 +210,10 @@ void setup()
      */
     Midi_Setup();
 
+#ifdef ARP_MODULE_ENABLED
+    Arp_Init(24 * 4); /* slowest tempo one step per bar */
+#endif
+
 #if 0
     setup_wifi();
 #else
@@ -232,10 +242,11 @@ void setup()
     Serial.printf("Total PSRAM: %d\n", ESP.getPsramSize());
     Serial.printf("Free PSRAM: %d\n", ESP.getFreePsram());
 
-    vuInL = VuMeter_GetPtr(0);
-    vuInR = VuMeter_GetPtr(1);
-    vuOutL = VuMeter_GetPtr(6);
-    vuOutR = VuMeter_GetPtr(7);
+
+    vuInL = VuMeterMatrix_GetPtr(0);
+    vuInR = VuMeterMatrix_GetPtr(1);
+    vuOutL = VuMeterMatrix_GetPtr(6);
+    vuOutR = VuMeterMatrix_GetPtr(7);
 
 #ifdef AUTO_LOAD_PATCHES_FROM_LITTLEFS
     /* finally we can preload some data if available */
@@ -250,8 +261,8 @@ void setup()
     Sampler_LoadPatchFile("/samples/76_Pure.wav");
 #endif
 
-    /* we need a second task for the terminal output */
-    xTaskCreatePinnedToCore(Core0Task, "Core0Task", 8000, NULL, 999, &Core0TaskHnd, 0);
+
+
 
     /* use this to easily test the output */
 #if 1
@@ -262,6 +273,28 @@ void setup()
     /* starts first loaded sample and activates this for scratching */
     Sampler_SetScratchSample(0, 1);
 #endif
+
+#if (defined ADC_TO_MIDI_ENABLED) || (defined MIDI_VIA_USB_ENABLED)
+#ifdef ESP32
+    Core0TaskInit();
+#else
+#error only supported by ESP32 platform
+#endif
+#endif
+}
+
+#ifdef ESP32
+/*
+ * Core 0
+ */
+/* this is used to add a task to core 0 */
+TaskHandle_t Core0TaskHnd;
+
+inline
+void Core0TaskInit()
+{
+    /* we need a second task for the terminal output */
+    xTaskCreatePinnedToCore(Core0Task, "CoreTask0", 8000, NULL, 999, &Core0TaskHnd, 0);
 }
 
 inline
@@ -275,7 +308,7 @@ void Core0TaskSetup()
     App_SetBrightness(0, 0.25);
 #endif
 
-    VuMeter_Init();
+    VuMeterMatrix_Init();
 }
 
 inline
@@ -283,7 +316,7 @@ void Core0TaskLoop()
 {
     Status_Process();
 #ifndef AS5600_ENABLED /* does not work together */
-    VuMeter_Display();
+    VuMeterMatrix_Display();
 #endif
 #ifdef SCREEN_ENABLED
     Screen_Loop();
@@ -304,6 +337,71 @@ void Core0Task(void *parameter)
         /* this seems necessary to trigger the watchdog */
         delay(1);
         yield();
+    }
+}
+#endif /* ESP32 */
+
+static uint32_t sync = 0;
+
+void Midi_SyncRecvd()
+{
+    sync += 1;
+}
+
+void Synth_RealTimeMsg(uint8_t msg)
+{
+#ifndef MIDI_SYNC_MASTER
+    switch (msg)
+    {
+    case 0xfa: /* start */
+        Arp_Reset();
+        break;
+    case 0xf8: /* Timing Clock */
+        Midi_SyncRecvd();
+        break;
+    }
+#endif
+}
+
+#ifdef MIDI_SYNC_MASTER
+
+#define MIDI_PPQ    24
+#define SAMPLES_PER_MIN  (SAMPLE_RATE*60)
+
+static float midi_tempo = 120.0f;
+
+void MidiSyncMasterLoop(void)
+{
+    static float midiDiv = 0;
+    midiDiv += SAMPLE_BUFFER_SIZE;
+    if (midiDiv >= (SAMPLES_PER_MIN) / (MIDI_PPQ * midi_tempo))
+    {
+        midiDiv -= (SAMPLES_PER_MIN) / (MIDI_PPQ * midi_tempo);
+        Midi_SyncRecvd();
+    }
+}
+
+void Synth_SetMidiMasterTempo(uint8_t unused, float val)
+{
+    midi_tempo = 60.0f + val * (240.0f - 60.0f);
+}
+
+#endif
+
+void Synth_SongPosition(uint16_t pos)
+{
+    Serial.printf("Songpos: %d\n", pos);
+    if (pos == 0)
+    {
+        Arp_Reset();
+    }
+}
+
+void Synth_SongPosReset(uint8_t unused, float var)
+{
+    if (var > 0)
+    {
+        Synth_SongPosition(0);
     }
 }
 
@@ -516,7 +614,7 @@ void loop()
     }
 #endif
 
-    VuMeter_Process(); /* calculates slow falling bars */
+    VuMeterMatrix_Process(); /* calculates slow falling bars */
 
     static uint32_t loop_cnt;
 
@@ -806,5 +904,6 @@ void App_SetBrightness(uint8_t unused, float value)
 #ifdef DISPLAY_160x80_ENABLED
     Display_SetBacklight(value * 255.0f);
 #endif
-    VuMeter_SetBrighness(unused, value / 8.0f);
+    VuMeterMatrix_SetBrighness(unused, value / 8.0f);
 }
+

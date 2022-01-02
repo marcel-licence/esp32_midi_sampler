@@ -29,7 +29,7 @@
  */
 
 /*
- * this file is used to precalculate a sine
+ * this file is used to pre-calculate a sine
  * sine is very slow and this can be used to speed up the execution
  *
  * Author: Marcel Licence

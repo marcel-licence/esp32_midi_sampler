@@ -72,13 +72,13 @@ struct pixel_rgb pixels[NUMPIXELS] = {0};
 float vuMeterValueInBf[VU_METER_COUNT];
 float vuMeterValueDisp[VU_METER_COUNT];
 
-void VuMeter_Init(void)
+void VuMeterMatrix_Init(void)
 {
 #ifdef LED_STRIP_PIN
     strip.begin();
     strip.show();
 #endif
-    VuMeter_Process();
+    VuMeterMatrix_Process();
 }
 
 /* found this function somewhere in some repo. source cannot be identified anymore */
@@ -140,7 +140,7 @@ void HSVtoRGB(int hue, int sat, int val, uint8_t colors[3])
     }
 }
 
-void VuMeter_Process(void)
+void VuMeterMatrix_Process(void)
 {
     memcpy(vuMeterValueDisp, vuMeterValueInBf, sizeof(vuMeterValueDisp));
     for (int i = 0; i < 8; i++)
@@ -149,7 +149,7 @@ void VuMeter_Process(void)
     }
 }
 
-void VuMeter_Display(void)
+void VuMeterMatrix_Display(void)
 {
 #ifdef LED_STRIP_PIN
     for (int i = 0; i < NUMPIXELS; i++)
@@ -195,7 +195,7 @@ void VuMeter_Display(void)
 #endif
 }
 
-float *VuMeter_GetPtr(uint8_t index)
+float *VuMeterMatrix_GetPtr(uint8_t index)
 {
     if (index >= VU_METER_COUNT)
     {
@@ -204,7 +204,7 @@ float *VuMeter_GetPtr(uint8_t index)
     return &vuMeterValueInBf[index];
 }
 
-void VuMeter_SetBrighness(uint8_t unused, float value)
+void VuMeterMatrix_SetBrighness(uint8_t unused, float value)
 {
 #ifdef LED_STRIP_PIN
     brightness = (value * 255.0f);

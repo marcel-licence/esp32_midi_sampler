@@ -217,10 +217,10 @@ void Sampler_Init(void)
         sampleRecords[i].sustain = 1.0f;
     }
 
-    vuStoreLen = VuMeter_GetPtr(2);
-    vuThrInput = VuMeter_GetPtr(4);
-    vuAbsInput = VuMeter_GetPtr(5);
-    vuSlwInput = VuMeter_GetPtr(3);
+    vuStoreLen = VuMeterMatrix_GetPtr(2);
+    vuThrInput = VuMeterMatrix_GetPtr(4);
+    vuAbsInput = VuMeterMatrix_GetPtr(5);
+    vuSlwInput = VuMeterMatrix_GetPtr(3);
 }
 
 

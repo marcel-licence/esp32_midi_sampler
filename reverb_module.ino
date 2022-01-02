@@ -8,10 +8,10 @@
  *
  * The explanation of the original module can be found here: https://youtu.be/nRLXNmLmHqM
  *
- * Changes:
+ * Changes to its original:
+ * - ported into an arduino project
  * - optimized for buffer processing
  * - added interface to set the level
- *
  */
 
 #define l_CB0 3460

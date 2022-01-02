@@ -138,6 +138,8 @@ struct midiMapping_s midiMapping =
     Sampler_NoteOff,
     Sampler_PitchBend,
     Sampler_ModulationWheel,
+    Synth_RealTimeMsg,
+    Synth_SongPosition,
     edirolMapping,
     sizeof(edirolMapping) / sizeof(edirolMapping[0]),
 };
