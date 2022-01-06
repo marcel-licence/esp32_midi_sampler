@@ -575,7 +575,7 @@ void Sampler_RecordStop(void)
         if (sampleStorageInPos > sampleRecords[sampleRecordCount].start)
         {
             sampleRecords[sampleRecordCount].valid = true;
-            sampleRecords[sampleRecordCount].end = sampleStorageInPos;
+            sampleRecords[sampleRecordCount].end = sampleStorageInPos - 1; /* pointing to last sample */
             sampleRecordCount += 1;
         }
         sampleStatus = sampler_idle;
@@ -1087,7 +1087,7 @@ void Sampler_LoadPatch(uint8_t unused, float value)
             }
 
             newPatch->start = sampleStorageInPos;
-            newPatch->end = newPatch->start + newSampleLen - 1;
+            newPatch->end = newPatch->start + newSampleLen - 1; /* pointing to last sample */
             newPatch->valid = true;
             lastIn = sampleStorageInPos;
             sampleStorageInPos += newSampleLen;
