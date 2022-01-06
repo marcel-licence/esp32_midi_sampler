@@ -13,7 +13,7 @@
  * - optimized for buffer processing
  * - added interface to set the level
  */
-
+#if 0
 #define l_CB0 3460
 #define l_CB1 2988
 #define l_CB2 3882
@@ -193,3 +193,4 @@ inline void Reverb_SetLevel(uint8_t not_used, float value)
     rev_level = value;
     Status_ValueChangedFloat("ReverbLevel", rev_level);
 }
+#endif

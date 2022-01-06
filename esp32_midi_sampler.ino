@@ -117,6 +117,7 @@
 /* requires the ml_Synth library */
 #include <ml_arp.h>
 #include <ml_midi_ctrl.h>
+#include <ml_reverb.h>
 
 
 /*
@@ -166,7 +167,7 @@ void setup()
 
     Serial.println();
 
-    Serial.printf("Firmware started successfully\n");
+
 
 #ifdef AS5600_ENABLED
     //  digitalWrite(TFT_CS, HIGH);
@@ -182,28 +183,25 @@ void setup()
 #endif
     Status_Setup();
 
-#ifdef ESP32_AUDIO_KIT
-#ifdef ES8388_ENABLED
-    ES8388_Setup();
-#else
-    ac101_setup();
-    /* using mic as default source */
-    ac101_setSourceMic();
-#endif
-#endif
+    Audio_Setup();
 
 #ifdef AS5600_ENABLED
     Wire.begin(I2C_SDA, I2C_SCL);
     AS5600_Setup();
 #endif
 
-    setup_i2s();
 #ifdef ESP32_AUDIO_KIT
     button_setup();
 #endif
     Sine_Init();
 
-    Reverb_Setup();
+    /*
+     * Initialize reverb
+     * The buffer shall be static to ensure that
+     * the memory will be exclusive available for the reverb module
+     */
+    static float revBuffer[REV_BUFF_SIZE];
+    Reverb_Setup(revBuffer);
 
     /*
      * setup midi module / rx port
@@ -214,22 +212,13 @@ void setup()
     Arp_Init(24 * 4); /* slowest tempo one step per bar */
 #endif
 
-#if 0
-    setup_wifi();
-#else
-    WiFi.mode(WIFI_OFF);
-#endif
-
-#ifndef ESP8266
-    btStop();
-    // esp_wifi_deinit();
-#endif
 
     Delay_Init();
     Delay_Reset();
 
     Sampler_Init();
 
+#ifdef ESP32
     Serial.printf("ESP.getFreeHeap() %d\n", ESP.getFreeHeap());
     Serial.printf("ESP.getMinFreeHeap() %d\n", ESP.getMinFreeHeap());
     Serial.printf("ESP.getHeapSize() %d\n", ESP.getHeapSize());
@@ -241,7 +230,7 @@ void setup()
     /* PSRAM will be fully used by the looper */
     Serial.printf("Total PSRAM: %d\n", ESP.getPsramSize());
     Serial.printf("Free PSRAM: %d\n", ESP.getFreePsram());
-
+#endif
 
     vuInL = VuMeterMatrix_GetPtr(0);
     vuInR = VuMeterMatrix_GetPtr(1);
@@ -261,8 +250,7 @@ void setup()
     Sampler_LoadPatchFile("/samples/76_Pure.wav");
 #endif
 
-
-
+    Serial.printf("Firmware started successfully\n");
 
     /* use this to easily test the output */
 #if 1
@@ -274,12 +262,10 @@ void setup()
     Sampler_SetScratchSample(0, 1);
 #endif
 
-#if (defined ADC_TO_MIDI_ENABLED) || (defined MIDI_VIA_USB_ENABLED)
 #ifdef ESP32
     Core0TaskInit();
 #else
 #error only supported by ESP32 platform
-#endif
 #endif
 }
 
@@ -472,7 +458,7 @@ inline void audio_task()
     memset(fl_sample, 0, sizeof(fl_sample));
     memset(fr_sample, 0, sizeof(fr_sample));
 
-    i2s_read_stereo_samples_buff(fl_sample, fr_sample, SAMPLE_BUFFER_SIZE);
+    Audio_Input(fl_sample, fr_sample);
 
     for (int n = 0; n < SAMPLE_BUFFER_SIZE; n++)
     {
@@ -524,7 +510,8 @@ inline void audio_task()
     /*
      * add also some reverb
      */
-    Reverb_Process(fl_sample, fr_sample, SAMPLE_BUFFER_SIZE);
+    Reverb_Process(fl_sample, SAMPLE_BUFFER_SIZE);
+    memcpy(fr_sample,  fl_sample, sizeof(fr_sample));
 
     /*
      * apply master output gain
@@ -540,11 +527,7 @@ inline void audio_task()
         *vuOutR = max(*vuOutR, absf(fr_sample[n]));
     }
 
-    /* function blocks and returns when sample is put into buffer */
-    if (i2s_write_stereo_samples_buff(fl_sample, fr_sample, SAMPLE_BUFFER_SIZE))
-    {
-        /* nothing for here */
-    }
+    Audio_Output(fl_sample, fr_sample);
 
     Status_Process_Sample(SAMPLE_BUFFER_SIZE);
 }

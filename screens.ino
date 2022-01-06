@@ -386,7 +386,7 @@ void Screen_SampleRecordBtnCb(uint8_t key, uint8_t down)
     }
 }
 
-extern float rev_level;
+float rev_level = 0; /* todo interface required */
 extern float delayToMix;
 extern float delayInLvl;
 extern uint32_t delayLen;

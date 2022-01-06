@@ -223,7 +223,6 @@ void Sampler_Init(void)
     vuSlwInput = VuMeterMatrix_GetPtr(3);
 }
 
-
 float Modulation(void)
 {
     float modSpeed = modulationSpeed;
@@ -243,9 +242,6 @@ float FrequencyFromVoice(struct sample_record_s *const voice, float note)
     float f = ((pow(2.0f, note / 12.0f)));   /* no frequency so dont use * 440.0f */
     return f;
 }
-
-
-
 
 inline
 void Sampler_ProcessADSR(struct sample_player_s *player)
@@ -1091,7 +1087,7 @@ void Sampler_LoadPatch(uint8_t unused, float value)
             }
 
             newPatch->start = sampleStorageInPos;
-            newPatch->end = newPatch->start + newSampleLen;
+            newPatch->end = newPatch->start + newSampleLen - 1;
             newPatch->valid = true;
             lastIn = sampleStorageInPos;
             sampleStorageInPos += newSampleLen;
