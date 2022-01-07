@@ -116,9 +116,12 @@
 
 /* requires the ml_Synth library */
 #include <ml_arp.h>
-#include <ml_midi_ctrl.h>
 #include <ml_reverb.h>
-
+#include <ml_midi_ctrl.h>
+#include <ml_delay.h>
+#ifdef OLED_OSC_DISP_ENABLED
+#include <ml_scope.h>
+#endif
 
 /*
  * use this to activate auto loading
@@ -204,6 +207,13 @@ void setup()
     Reverb_Setup(revBuffer);
 
     /*
+     * Prepare a buffer which can be used for the delay
+     */
+    static int16_t *delBuffer1 = (int16_t *)malloc(sizeof(int16_t) * MAX_DELAY);
+    static int16_t *delBuffer2 = (int16_t *)malloc(sizeof(int16_t) * MAX_DELAY);
+    Delay_Init2(delBuffer1, delBuffer2, MAX_DELAY);
+
+    /*
      * setup midi module / rx port
      */
     Midi_Setup();
@@ -211,10 +221,6 @@ void setup()
 #ifdef ARP_MODULE_ENABLED
     Arp_Init(24 * 4); /* slowest tempo one step per bar */
 #endif
-
-
-    Delay_Init();
-    Delay_Reset();
 
     Sampler_Init();
 
@@ -286,6 +292,14 @@ void Core0TaskInit()
 inline
 void Core0TaskSetup()
 {
+    /*
+     * init your stuff for core0 here
+     */
+
+#ifdef OLED_OSC_DISP_ENABLED
+    ScopeOled_Setup();
+#endif
+
 #ifdef DISPLAY_160x80_ENABLED
     Display_Setup();
 #ifdef SCREEN_ENABLED
@@ -309,6 +323,10 @@ void Core0TaskLoop()
 #endif
 #ifdef DISPLAY_160x80_ENABLED
     Display_Draw();
+#endif
+
+#ifdef OLED_OSC_DISP_ENABLED
+    ScopeOled_Process();
 #endif
 }
 
@@ -503,12 +521,12 @@ inline void audio_task()
     Sampler_Process(fl_sample, fr_sample, SAMPLE_BUFFER_SIZE);
 
     /*
-     * little simple delay effect
+     * process delay line
      */
-    Delay_Process_Buff(fl_sample, fr_sample, SAMPLE_BUFFER_SIZE);
+    Delay_Process_Buff2(fl_sample, fr_sample, SAMPLE_BUFFER_SIZE);
 
     /*
-     * add also some reverb
+     * add some mono reverb
      */
     Reverb_Process(fl_sample, SAMPLE_BUFFER_SIZE);
     memcpy(fr_sample,  fl_sample, sizeof(fr_sample));
@@ -528,6 +546,10 @@ inline void audio_task()
     }
 
     Audio_Output(fl_sample, fr_sample);
+
+#ifdef OLED_OSC_DISP_ENABLED
+    ScopeOled_AddSamples(fl_sample, fr_sample, SAMPLE_BUFFER_SIZE);
+#endif
 
     Status_Process_Sample(SAMPLE_BUFFER_SIZE);
 }

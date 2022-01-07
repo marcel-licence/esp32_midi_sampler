@@ -105,7 +105,7 @@ struct midiControllerMapping edirolMapping[] =
 
     { 0x4, 0x11, "S5", NULL, Delay_SetInputLevel, 0},
     { 0x5, 0x11, "S6", NULL, Delay_SetFeedback, 0},
-    { 0x6, 0x11, "S7", NULL, Delay_SetLevel, 0},
+    { 0x6, 0x11, "S7", NULL, Delay_SetOutputLevel, 0},
     { 0x7, 0x11, "S8", NULL, Delay_SetLength, 0},
 
     { 0x1, 0x12, "S9", NULL, App_SetOutputLevel, 0},
