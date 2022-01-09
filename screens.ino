@@ -387,10 +387,18 @@ void Screen_SampleRecordBtnCb(uint8_t key, uint8_t down)
 }
 
 float rev_level = 0; /* todo interface required */
+
+#if 0 /* actually not availble */
 extern float delayToMix;
 extern float delayInLvl;
 extern uint32_t delayLen;
 extern float delayFeedback;
+#else
+float delayToMix = 0;
+float delayInLvl = 0;
+uint32_t delayLen = 0;
+float delayFeedback = 0;
+#endif
 
 void Screen_EffectsDraw(void)
 {
