@@ -196,6 +196,7 @@ void setup()
 #ifdef ESP32_AUDIO_KIT
     button_setup();
 #endif
+
     Sine_Init();
 
     /*
@@ -318,6 +319,7 @@ void Core0TaskLoop()
 #ifndef AS5600_ENABLED /* does not work together */
     VuMeterMatrix_Display();
 #endif
+
 #ifdef SCREEN_ENABLED
     Screen_Loop();
 #endif
@@ -345,11 +347,11 @@ void Core0Task(void *parameter)
 }
 #endif /* ESP32 */
 
-static uint32_t sync = 0;
+static uint32_t midiSyncCount = 0;
 
 void Midi_SyncRecvd()
 {
-    sync += 1;
+    midiSyncCount += 1;
 }
 
 void Synth_RealTimeMsg(uint8_t msg)
