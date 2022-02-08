@@ -77,7 +77,13 @@
  */
 #define MIDI_RECV_FROM_SERIAL
 
-/* activate MIDI via USB (not implemented in this project) */
+/*
+ * activate MIDI via USB (not implemented in this project)
+ *
+ * This requires the MAX3421E connected via SPI to the ESP32
+ *
+ * @see https://youtu.be/Mt3rT-SVZww
+ */
 //#define MIDI_VIA_USB_ENABLED
 
 /* use this to display a scope on the oled display */
@@ -90,7 +96,7 @@
  * include the board configuration
  * there you will find the most hardware depending pin settings
  */
-#include <ml_boards.h>
+#include <ml_boards.h> /* requires the ML_SynthTools library:  https://github.com/marcel-licence/ML_SynthTools */
 
 #ifdef BOARD_ML_V1
 #elif (defined BOARD_ESP32_AUDIO_KIT_AC101)

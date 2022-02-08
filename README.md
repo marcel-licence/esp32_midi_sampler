@@ -23,6 +23,7 @@ Following libraries are used:
 - AC101 in Version 0.0.1
 - Adafruit_NeoPixel in Version 1.7.0
 - Wire in Version 1.0.1
+- ML_SynthTools (https://github.com/marcel-licence/ML_SynthTools)
 
 Configuration of the Audio Kit:
 - Set DIP 2, 3 to on and all other DIP switches to off (required for SD card access)
