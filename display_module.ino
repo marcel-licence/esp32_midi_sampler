@@ -43,8 +43,8 @@
 
 #ifdef DISPLAY_160x80_ENABLED
 
-#include <Adafruit_GFX.h>    // Core graphics library
-#include <Adafruit_ST7735.h> // Hardware-specific library for ST7735
+#include <Adafruit_GFX.h> /* requires library Adafruit-GFX-Library from https://github.com/adafruit/Adafruit-GFX-Library */
+#include <Adafruit_ST7735.h> /* requires library Adafruit-ST7735-Library from https://github.com/adafruit/Adafruit-ST7735-Library */
 //#include <Adafruit_ST7789.h> // Hardware-specific library for ST7789
 #include <SPI.h>
 

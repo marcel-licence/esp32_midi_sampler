@@ -44,6 +44,8 @@
 
 #ifdef AS5600_ENABLED
 
+//#define AS5600_DEBUG_ENABLED /* use this to print out some debug messages */
+
 //#include <Wire.h>
 
 #define AS5600_ADDR 0x36
@@ -96,9 +98,13 @@ uint16_t AS5600_ReadReg_u16(uint8_t reg)
 
 void AS5600_Setup()
 {
-    // Serial.printf("CONF: 0x%08x\n", AS5600_ReadReg_u16(REG_CONF));
+#ifdef AS5600_DEBUG_ENABLED
+    Serial.printf("CONF: 0x%08x\n", AS5600_ReadReg_u16(REG_CONF));
+#endif
     AS5600_WriteRegU16(REG_CONF, 0x08); // hyst to 2 LSB to avoid static noise
-    // Serial.printf("CONF: 0x%08x\n", AS5600_ReadReg_u16(REG_CONF));
+#ifdef AS5600_DEBUG_ENABLED
+    Serial.printf("CONF: 0x%08x\n", AS5600_ReadReg_u16(REG_CONF));
+#endif
 }
 
 void AS5600_Loop()
@@ -132,7 +138,9 @@ void AS5600_Loop()
         {
             ch += 4096;
         }
-        //Serial.printf("RAW_AGNLE: %d, %d\n", newVal, ch);
+#ifdef AS5600_DEBUG_ENABLED
+        Serial.printf("RAW_ANGLE: %d, %d\n", newVal, ch);
+#endif
         lastVal = newVal;
         sumCh += ch;
     }

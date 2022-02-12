@@ -190,6 +190,7 @@ void setup()
 
 #ifdef AS5600_ENABLED
     Wire.begin(I2C_SDA, I2C_SCL);
+    Wire.setClock(I2C_SPEED);
     AS5600_Setup();
 #endif
 
@@ -207,12 +208,14 @@ void setup()
     static float revBuffer[REV_BUFF_SIZE];
     Reverb_Setup(revBuffer);
 
+#ifdef MAX_DELAY
     /*
      * Prepare a buffer which can be used for the delay
      */
     static int16_t *delBuffer1 = (int16_t *)malloc(sizeof(int16_t) * MAX_DELAY);
     static int16_t *delBuffer2 = (int16_t *)malloc(sizeof(int16_t) * MAX_DELAY);
     Delay_Init2(delBuffer1, delBuffer2, MAX_DELAY);
+#endif
 
     /*
      * setup midi module / rx port
@@ -260,7 +263,7 @@ void setup()
     Serial.printf("Firmware started successfully\n");
 
     /* use this to easily test the output */
-#if 1
+#ifdef NOTE_ON_AFTER_SETUP
     Sampler_NoteOn(0, 64, 1);
 #endif
 
@@ -522,10 +525,12 @@ inline void audio_task()
      */
     Sampler_Process(fl_sample, fr_sample, SAMPLE_BUFFER_SIZE);
 
+#ifdef MAX_DELAY
     /*
      * process delay line
      */
     Delay_Process_Buff2(fl_sample, fr_sample, SAMPLE_BUFFER_SIZE);
+#endif
 
     /*
      * add some mono reverb

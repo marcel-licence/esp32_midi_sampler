@@ -47,6 +47,9 @@
 #define CONFIG_H_
 
 
+//#define NOTE_ON_AFTER_SETUP /* used to get a test tone without MIDI input. Can be deactivated */
+
+
 //#define BOARD_ML_V1 /* activate this when using the ML PCB V1 */
 //#define BOARD_ESP32_AUDIO_KIT_AC101 /* activate this when using the ESP32 Audio Kit v2.2 with the AC101 codec */
 #define BOARD_ESP32_AUDIO_KIT_ES8388 /* activate this when using the ESP32 Audio Kit v2.2 with the ES8388 codec */
@@ -68,7 +71,7 @@
 //#define MIDI_USE_CONST_VELOCITY
 
 /* this variable defines the max length of the delay and also the memory consumption */
-#define MAX_DELAY   (SAMPLE_RATE/2) /* 1/2s -> @ 44100 samples */
+#define MAX_DELAY   (SAMPLE_RATE/4) /* 1/2s -> @ 44100 samples */
 
 /* you can receive MIDI messages via serial-USB connection */
 /*
@@ -86,10 +89,25 @@
  */
 //#define MIDI_VIA_USB_ENABLED
 
-/* use this to display a scope on the oled display */
-#define OLED_OSC_DISP_ENABLED
+/*
+ * use this to display a scope on the oled display
+ * It shares the I2C with the AS5600
+ */
+//#define OLED_OSC_DISP_ENABLED
 
-//#define AS5600_ENABLED /* can be used for scratching */
+/*
+ * Following define enables the AS5600 processing (for scratching)
+ * It should be connected to I2C_SDA, I2C_SCL
+ * It may be defined by the selected board (e.g. ESP32 Audio Kit with ES8388)
+ * In case it is not defined please make your own defines
+ * Ensure that only unused pins are used for I2C
+ */
+//#define AS5600_ENABLED
+
+
+//#define I2C_SDA 18
+//#define I2C_SCL 23
+
 #define I2C_SPEED 1000000
 
 /*
