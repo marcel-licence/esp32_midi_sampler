@@ -537,12 +537,17 @@ void PatchManager_LoadPatchParam(fs::FS &fs, char *filename, struct patchParam_s
     if (!f)
     {
 #ifdef PATCHMANAGER_DEBUG
-        Serial.printf("No patch parameter\n");
+        Serial.printf("No patch parameter\nUsing default values\n");
 #endif
         patchParam->version = 0;
         patchParam->patchParamV0.pitch = 1;
         patchParam->patchParamV0.loop_start = 0;
-        patchParam->patchParamV0.loop_end = 0;
+        patchParam->patchParamV0.loop_end = 9999999; /* using sample length would be better */
+
+        patchParam->patchParamV1.attack = 1;
+        patchParam->patchParamV1.decay = 1;
+        patchParam->patchParamV1.release = 0;
+        patchParam->patchParamV1.sustain = 1;
         return;
     }
 
