@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Marcel Licence
+ * Copyright (c) 2022 Marcel Licence
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -46,6 +46,13 @@
  * Author: Marcel Licence
  */
 
+
+#ifdef ARDUINO_RUNNING_CORE /* tested with arduino esp32 core version 2.0.2 */
+#include <LittleFS.h> /* Using library LittleFS at version 2.0.0 from https://github.com/espressif/arduino-esp32 */
+#else
+#include <LITTLEFS.h> /* Using library LittleFS_esp32 at version 1.0.6 from https://github.com/lorol/LITTLEFS */
+#define LittleFS LITTLEFS
+#endif
 
 enum patchDst
 {
@@ -210,7 +217,7 @@ int PatchManager_GetFileListExt(void(*fileInd)(char *filename, int offset), int 
     {
         if (PatchManager_PrepareLittleFs())
         {
-            return PatchManager_GetFileList(LITTLEFS, "/samples", fileInd, offset);
+            return PatchManager_GetFileList(LittleFS, "/samples", fileInd, offset);
         }
     }
     return 0;
@@ -303,13 +310,13 @@ void PatchManager_UpdateFilename(void)
     {
         if (PatchManager_PrepareLittleFs())
         {
-            PatchManager_FilenameFromIdx(LITTLEFS, "/samples", patch_selectedFileIndex);
-            LITTLEFS.end();
+            PatchManager_FilenameFromIdx(LittleFS, "/samples", patch_selectedFileIndex);
+            LittleFS.end();
 #ifdef PATCHMANAGER_DEBUG
             Serial.printf("Active file: %03d - %s\n", patch_selectedFileIndex, currentFileNameWav);
             Serial.printf("Active file: %03d - %s\n", patch_selectedFileIndex, currentFileNameBin);
 #endif
-            sprintf(lastSelectedFile, "LITTLEFS: %s", currentFileNameWav);
+            sprintf(lastSelectedFile, "LittleFS: %s", currentFileNameWav);
             Status_FileName(lastSelectedFile);
             sprintf(lastSelectedFile, "%s", currentFileNameWav);
         }
@@ -508,9 +515,9 @@ bool PatchManager_PrepareSdCard(void)
 
 bool PatchManager_PrepareLittleFs(void)
 {
-    if (!LITTLEFS.begin())
+    if (!LittleFS.begin())
     {
-        Status_LogMessage("LITTLEFS Mount Failed");
+        Status_LogMessage("LittleFS Mount Failed");
         return false;
     }
 
@@ -640,15 +647,15 @@ void PatchManager_SaveNewPatch(struct patchParam_s *patchParam, int16_t *buffer,
     {
         if (PatchManager_PrepareLittleFs())
         {
-            PatchManager_CreateDir(LITTLEFS, "/samples");
-            PatchManager_CreateNewFileNames(LITTLEFS);
-            PatchManager_SavePatchParam(LITTLEFS, parNewFileName, patchParam);
-            PatchManager_SaveWavefile(LITTLEFS, wavNewFileName, buffer, bufferSize);
-            LITTLEFS.end();
+            PatchManager_CreateDir(LittleFS, "/samples");
+            PatchManager_CreateNewFileNames(LittleFS);
+            PatchManager_SavePatchParam(LittleFS, parNewFileName, patchParam);
+            PatchManager_SaveWavefile(LittleFS, wavNewFileName, buffer, bufferSize);
+            LittleFS.end();
 #ifdef PATCHMANAGER_DEBUG
-            Serial.printf("Written %d to %s on LITTLEFS\n", bufferSize, wavFileName);
+            Serial.printf("Written %d to %s on LittleFS\n", bufferSize, wavFileName);
 #else
-            Status_ValueChangedInt("Written to LITTLEFS",  bufferSize);
+            Status_ValueChangedInt("Written to LittleFS",  bufferSize);
 #endif
         }
     }
@@ -686,14 +693,14 @@ uint32_t PatchManager_LoadPatch(struct patchParam_s *patchParam, int16_t *buffer
     {
         if (PatchManager_PrepareLittleFs())
         {
-            PatchManager_LoadPatchParam(LITTLEFS, currentFileNameBin, patchParam);
+            PatchManager_LoadPatchParam(LittleFS, currentFileNameBin, patchParam);
 
-            readBufferBytes = PatchManager_LoadWavefile(LITTLEFS, currentFileNameWav, buffer, bufferSize);
-            LITTLEFS.end();
+            readBufferBytes = PatchManager_LoadWavefile(LittleFS, currentFileNameWav, buffer, bufferSize);
+            LittleFS.end();
 #ifdef PATCHMANAGER_DEBUG
-            Serial.printf("Read %d from %s on LITTLEFS\n", readBufferBytes, currentFileNameWav);
+            Serial.printf("Read %d from %s on LittleFS\n", readBufferBytes, currentFileNameWav);
 #else
-            Status_ValueChangedInt("Read from LITTLEFS",  readBufferBytes);
+            Status_ValueChangedInt("Read from LittleFS",  readBufferBytes);
 #endif
         }
     }

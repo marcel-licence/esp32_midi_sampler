@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Marcel Licence
+ * Copyright (c) 2022 Marcel Licence
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -106,7 +106,6 @@
 
 #include <Arduino.h>
 #include <FS.h>
-#include <LITTLEFS.h>
 #include <SD_MMC.h>
 #include <WiFi.h>
 
@@ -114,7 +113,7 @@
 #include <Wire.h>
 #endif
 
-/* requires the ml_Synth library */
+/* requires the ML_SynthTools library: https://github.com/marcel-licence/ML_SynthTools */
 #include <ml_arp.h>
 #include <ml_reverb.h>
 #include <ml_midi_ctrl.h>
