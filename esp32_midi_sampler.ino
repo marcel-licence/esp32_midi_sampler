@@ -267,6 +267,13 @@ void setup()
     Sampler_NoteOn(0, 64, 1);
 #endif
 
+#ifdef MIDI_STREAM_PLAYER_ENABLED
+    MidiStreamPlayer_Init();
+    //char midiFile[] = "/esp32_sampler_demo.mid";
+    char midiFile[] = "/esp32_sampler_demo2.mid";
+    MidiStreamPlayer_PlayMidiFile_fromLittleFS(midiFile, 2);
+#endif
+
 #ifdef AS5600_ENABLED
     /* starts first loaded sample and activates this for scratching */
     Sampler_SetScratchSample(0, 1);
@@ -641,6 +648,10 @@ void loop()
      * doing midi only 64 times per sample cycle
      */
     Midi_Process();
+
+#ifdef MIDI_STREAM_PLAYER_ENABLED
+    MidiStreamPlayer_Tick(SAMPLE_BUFFER_SIZE);
+#endif
 }
 
 uint8_t baseKey = 64 + 12 + 7; // c
