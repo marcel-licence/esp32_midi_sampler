@@ -250,6 +250,7 @@ void setup()
     /* finally we can preload some data if available */
     PatchManager_SetDestination(0, 1);
     Sampler_LoadPatchFile("/samples/pet_bottle.wav");
+    Sampler_LoadPatchFile("/samples/sine_plug.wav");
 #endif
 
     /* select sd card */
