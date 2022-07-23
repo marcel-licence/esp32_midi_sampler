@@ -198,6 +198,106 @@ void setup()
     Sine_Init();
 
     /*
+     * setup midi module / rx port
+     */
+    Midi_Setup();
+
+#ifdef ARP_MODULE_ENABLED
+    Arp_Init(24 * 4); /* slowest tempo one step per bar */
+#endif
+
+    {
+        static int16_t *storage = NULL;
+        uint32_t storageLen = 0;
+
+#ifndef SAMPLER_USE_HEAP_ONLY
+        psramInit();
+        Serial.printf("Total PSRAM: %d\n", ESP.getPsramSize());
+        Serial.printf("Free PSRAM: %d\n", ESP.getFreePsram());
+
+        if (ESP.getPsramSize() == 0)
+        {
+            Serial.printf("PSRAM is not available! Please ensure PSRAM is enabled and also available on your ESP32");
+            while (true)
+            {
+                delay(1);
+            }
+        }
+
+        if (ESP.getFreePsram() == 0)
+        {
+            Serial.printf("PSRAM has no free Memory! Please ensure PSRAM is enabled and also available on your ESP32");
+            while (true)
+            {
+                delay(1);
+            }
+        }
+
+        storageLen = ESP.getFreePsram() / sizeof(int16_t);
+        uint32_t storageBytes = storageLen * sizeof(int16_t);
+
+        Serial.printf("Try to allocate %d bytes\n", storageBytes);
+
+        storage = (int16_t *)ps_calloc(storageLen, sizeof(int16_t));
+        if (storage == NULL)
+        {
+            Serial.printf("Not able to allocate the complete PSRAM buffer!\nNow trying to reduce the allocation buffer size");
+
+            /*
+             * for some reason using a newer ESP32 board library you cannot allocate the complete PSRAM memory
+             * this loop will decrease the buffer size and repeat the allocation step again until it is successful
+             */
+            while ((storage == NULL))
+            {
+                storageLen -= 1;
+                storageBytes = storageLen * sizeof(int16_t);
+                storage = (int16_t *)ps_calloc(storageLen, sizeof(int16_t));
+            }
+        }
+
+        Serial.printf("Total PSRAM: %d\n", ESP.getPsramSize());
+        Serial.printf("Free PSRAM: %d\n", ESP.getFreePsram());
+#else
+        storageLen = SAMPLER_USE_HEAP_ONLY;
+        uint32_t storageBytes = storageLen * sizeof(int16_t);
+
+        Serial.printf("Try to allocate %d bytes from heap\n", storageBytes);
+
+        storage = (int16_t *)calloc(storageLen, sizeof(int16_t));
+#endif
+
+        if (storage == NULL)
+        {
+            Serial.printf("Memory couldn't be allocated as sample storage!\n");
+
+#ifdef ESP32
+            Serial.printf("ESP.getFreeHeap() %d\n", ESP.getFreeHeap());
+            Serial.printf("ESP.getMinFreeHeap() %d\n", ESP.getMinFreeHeap());
+            Serial.printf("ESP.getHeapSize() %d\n", ESP.getHeapSize());
+            Serial.printf("ESP.getMaxAllocHeap() %d\n", ESP.getMaxAllocHeap());
+
+            Serial.printf("Total heap: %d\n", ESP.getHeapSize());
+            Serial.printf("Free heap: %d\n", ESP.getFreeHeap());
+
+            /* PSRAM will be fully used by the looper */
+            Serial.printf("Total PSRAM: %d\n", ESP.getPsramSize());
+            Serial.printf("Free PSRAM: %d\n", ESP.getFreePsram());
+#endif
+
+            while (true)
+            {
+                delay(1);
+            }
+        }
+
+        Serial.printf("Allocated %d bytes\n", storageBytes);
+        Serial.printf("storageLen: %d\n", storageLen);
+        Serial.printf("storageLen: %0.2fs\n", ((float)storageLen) / ((float)SAMPLE_RATE));
+
+        Sampler_Init(storage, storageLen);
+    }
+
+    /*
      * Initialize reverb
      * The buffer shall be static to ensure that
      * the memory will be exclusive available for the reverb module
@@ -227,17 +327,6 @@ void setup()
     Serial.printf("delay samples: %d\n", MAX_DELAY);
     Serial.printf("Max delay time: %0.2fs\n", ((float)MAX_DELAY) / ((float)SAMPLE_RATE));
 #endif
-
-    /*
-     * setup midi module / rx port
-     */
-    Midi_Setup();
-
-#ifdef ARP_MODULE_ENABLED
-    Arp_Init(24 * 4); /* slowest tempo one step per bar */
-#endif
-
-    Sampler_Init();
 
 #ifdef ESP32
     Serial.printf("ESP.getFreeHeap() %d\n", ESP.getFreeHeap());

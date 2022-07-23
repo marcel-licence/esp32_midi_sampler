@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Marcel Licence
+ * Copyright (c) 2022 Marcel Licence
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -181,58 +181,11 @@ struct sample_player_s *beatPlayer = NULL;
 uint8_t sampler_lastCh = 0xFF;
 uint8_t sampler_lastNote = 0xFF;
 
-void Sampler_Init(void)
+void Sampler_Init(int16_t *storage, uint32_t storageLen)
 {
-    psramInit();
-    Serial.printf("Total PSRAM: %d\n", ESP.getPsramSize());
-    Serial.printf("Free PSRAM: %d\n", ESP.getFreePsram());
-
-    if (ESP.getPsramSize() == 0)
-    {
-        Serial.printf("PSRAM is not available! Please ensure PSRAM is enabled and also available on your ESP32");
-        while (true)
-        {
-            delay(1);
-        }
-    }
-
-    if (ESP.getFreePsram() == 0)
-    {
-        Serial.printf("PSRAM has no free Memory! Please ensure PSRAM is enabled and also available on your ESP32");
-        while (true)
-        {
-            delay(1);
-        }
-    }
-
-    sampleStorageLen = ESP.getFreePsram() / sizeof(int16_t);
-    uint32_t sampleStorageBytes = sampleStorageLen * sizeof(int16_t);
-
-    Serial.printf("Try to allocate %d bytes\n", sampleStorageBytes);
-
-    sampleStorage = (int16_t *)ps_calloc(sampleStorageLen, sizeof(int16_t));
-    if (sampleStorage == NULL)
-    {
-        Serial.printf("Not able to allocate the complete PSRAM buffer!\nNow trying to reduce the allocation buffer size");
-
-        /*
-         * for some reason using a newer ESP32 board library you cannot allocate the complete PSRAM memory
-         * this loop will decrease the buffer size and repeat the allocation step again until it is successful
-         */
-        while ((sampleStorage == NULL))
-        {
-            sampleStorageLen -= 1;
-            sampleStorageBytes = sampleStorageLen * sizeof(int16_t);
-            sampleStorage = (int16_t *)ps_calloc(sampleStorageLen, sizeof(int16_t));
-        }
-    }
-
-    Serial.printf("Total PSRAM: %d\n", ESP.getPsramSize());
-    Serial.printf("Free PSRAM: %d\n", ESP.getFreePsram());
-
-    Serial.printf("Allocated %d bytes\n", sampleStorageBytes);
-    Serial.printf("sampleStorageLen: %d\n", sampleStorageLen);
-    Serial.printf("sampleStorageLen: %0.2fs\n", ((float)sampleStorageLen) / ((float)SAMPLE_RATE));
+    /* remember storage pointer and length */
+    sampleStorage = storage;
+    sampleStorageLen = storageLen;
 
     for (int i = 0; i < SAMPLE_MAX_PLAYERS; i++)
     {
@@ -419,7 +372,6 @@ void Sampler_Process(float *signal_l, float *signal_r, const int buffLen)
                 float f1 = 1.0f - f2;
 
                 float sample_f = 0;
-
                 sample_f += f1 * ((float)sampleStorage[player->pos]) / ((float)0x8000);
                 sample_f += f2 * ((float)sampleStorage[player->pos + 1]) / ((float)0x8000);
 
