@@ -81,6 +81,12 @@
 #define MIDI_RECV_FROM_SERIAL
 
 /*
+ * you can use this to use the sampler without PSRAM
+ * keep in mind that the there is just a small buffer available to store samples
+ */
+//#define SAMPLER_USE_HEAP_ONLY   (128*1024)
+
+/*
  * activate MIDI via USB (not implemented in this project)
  *
  * This requires the MAX3421E connected via SPI to the ESP32

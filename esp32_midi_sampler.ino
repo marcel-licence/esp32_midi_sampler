@@ -105,8 +105,6 @@
 #include "config.h"
 
 #include <Arduino.h>
-#include <FS.h>
-#include <SD_MMC.h>
 #include <WiFi.h>
 
 #ifdef AS5600_ENABLED
@@ -214,6 +212,20 @@ void setup()
     static int16_t *delBuffer1 = (int16_t *)malloc(sizeof(int16_t) * MAX_DELAY);
     static int16_t *delBuffer2 = (int16_t *)malloc(sizeof(int16_t) * MAX_DELAY);
     Delay_Init2(delBuffer1, delBuffer2, MAX_DELAY);
+    if ((delBuffer1 == NULL) || (delBuffer2 == NULL))
+    {
+        /*
+         * we will end up here if the requested buffer is too big
+         * the malloc memory is limited and you should keep it small as possible
+         */
+        Serial.printf("Memory for delay couldn't be initialized!\n");
+        while (true)
+        {
+            delay(1);
+        }
+    }
+    Serial.printf("delay samples: %d\n", MAX_DELAY);
+    Serial.printf("Max delay time: %0.2fs\n", ((float)MAX_DELAY) / ((float)SAMPLE_RATE));
 #endif
 
     /*

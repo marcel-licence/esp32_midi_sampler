@@ -47,12 +47,35 @@
  */
 
 
+#ifdef __CDT_PARSER__
+#include <cdt.h>
+#endif
+
+
+#include <FS.h>
+
+#ifdef USE_SPIFFS_LEGACY
+
+#include <SPIFFS.h> /* Using library SPIFFS at version 1.0 from https://github.com/espressif/arduino-esp32 */
+#define LittleFS SPIFFS
+
+#else /* USE_SPIFFS_LEGACY */
+
+#include <FS.h>
 #ifdef ARDUINO_RUNNING_CORE /* tested with arduino esp32 core version 2.0.2 */
 #include <LittleFS.h> /* Using library LittleFS at version 2.0.0 from https://github.com/espressif/arduino-esp32 */
 #else
 #include <LITTLEFS.h> /* Using library LittleFS_esp32 at version 1.0.6 from https://github.com/lorol/LITTLEFS */
 #define LittleFS LITTLEFS
 #endif
+
+#endif /* USE_SPIFFS_LEGACY */
+
+#include <SD_MMC.h>
+
+
+#define FST fs::FS
+
 
 enum patchDst
 {
@@ -119,6 +142,16 @@ union wavHeader
 };
 
 
+static void PatchManager_SaveWavefile(FST &fs, char *filename, int16_t *buffer, uint32_t bufferSize);
+static void PatchManager_FilenameFromIdx(FST &fs, const char *dirname, uint8_t index);
+static int PatchManager_GetFileList(FST &fs, const char *dirname, void(*fileInd)(char *filename, int offset), int offset);
+static uint32_t PatchManager_LoadWavefile(FST &fs, char *filename, int16_t *buffer, uint32_t bufferSize);
+static void PatchManager_CreateDir(FST &fs, const char *path);
+static void PatchManager_SavePatchParam(FST &fs, char *filename, struct patchParam_s *patchParam);
+static void PatchManager_LoadPatchParam(FST &fs, char *filename, struct patchParam_s *patchParam);
+static void PatchManager_CreateNewFileNames(FST &fs);
+
+
 uint32_t patch_selectedFileIndex = 0;
 char currentFileNameWav[64] = "/samples/testSample.wav\0";
 char currentFileNameBin[64] = "/samples/testSample.bin\0";
@@ -138,7 +171,7 @@ void PatchManager_Init(void)
     /* nothing to do */
 }
 
-int PatchManager_GetFileList(fs::FS &fs, const char *dirname, void(*fileInd)(char *filename, int offset), int offset)
+static int PatchManager_GetFileList(FST &fs, const char *dirname, void(*fileInd)(char *filename, int offset), int offset)
 {
 #ifdef PATCHMANAGER_DEBUG
     Serial.printf("Listing directory: %s\n", dirname);
@@ -213,6 +246,7 @@ int PatchManager_GetFileListExt(void(*fileInd)(char *filename, int offset), int 
             return PatchManager_GetFileList(SD_MMC, "/samples", fileInd, offset);
         }
     }
+#ifdef ESP32
     else
     {
         if (PatchManager_PrepareLittleFs())
@@ -220,10 +254,11 @@ int PatchManager_GetFileListExt(void(*fileInd)(char *filename, int offset), int 
             return PatchManager_GetFileList(LittleFS, "/samples", fileInd, offset);
         }
     }
+#endif
     return 0;
 }
 
-void PatchManager_FilenameFromIdx(fs::FS &fs, const char *dirname, uint8_t index)
+static void PatchManager_FilenameFromIdx(FST &fs, const char *dirname, uint8_t index)
 {
 #ifdef PATCHMANAGER_DEBUG
     Serial.printf("Listing directory: %s\n", dirname);
@@ -296,7 +331,9 @@ void PatchManager_UpdateFilename(void)
         if (PatchManager_PrepareSdCard())
         {
             PatchManager_FilenameFromIdx(SD_MMC, "/samples", patch_selectedFileIndex);
+#ifdef ESP32
             SD_MMC.end();
+#endif
 #ifdef PATCHMANAGER_DEBUG
             Serial.printf("Active file: %03d - %s\n", patch_selectedFileIndex, currentFileNameWav);
             Serial.printf("Active file: %03d - %s\n", patch_selectedFileIndex, currentFileNameBin);
@@ -306,6 +343,7 @@ void PatchManager_UpdateFilename(void)
             sprintf(lastSelectedFile, "%s", currentFileNameWav);
         }
     }
+#ifdef ESP32
     else
     {
         if (PatchManager_PrepareLittleFs())
@@ -321,6 +359,7 @@ void PatchManager_UpdateFilename(void)
             sprintf(lastSelectedFile, "%s", currentFileNameWav);
         }
     }
+#endif
 }
 
 void PatchManager_FileIdxInc(uint8_t unused, float value)
@@ -344,7 +383,7 @@ void PatchManager_FileIdxDec(uint8_t unused, float value)
     }
 }
 
-void PatchManager_SaveWavefile(fs::FS &fs, char *filename, int16_t *buffer, uint32_t bufferSize)
+static void PatchManager_SaveWavefile(FST &fs, char *filename, int16_t *buffer, uint32_t bufferSize)
 {
     File f = fs.open(filename, FILE_WRITE);
     if (!f)
@@ -371,7 +410,11 @@ void PatchManager_SaveWavefile(fs::FS &fs, char *filename, int16_t *buffer, uint
     memcpy(wavHeader.dataStr, "data", 4);
     wavHeader.dataSize = dataSizeOfbuffer;
 
+#ifdef ESP32
     f.seek(0, SeekSet);
+#else
+    f.seek(0);
+#endif
     f.write(wavHeader.wavHdr, 44);
 
     /* avoid watchdog */
@@ -384,7 +427,7 @@ void PatchManager_SaveWavefile(fs::FS &fs, char *filename, int16_t *buffer, uint
     delay(1);
 }
 
-uint32_t PatchManager_LoadWavefile(fs::FS &fs, char *filename, int16_t *buffer, uint32_t bufferSize)
+static uint32_t PatchManager_LoadWavefile(FST &fs, char *filename, int16_t *buffer, uint32_t bufferSize)
 {
     File f = fs.open(filename, FILE_READ);
     if (!f)
@@ -397,7 +440,11 @@ uint32_t PatchManager_LoadWavefile(fs::FS &fs, char *filename, int16_t *buffer, 
 
     memset(wavHeader.wavHdr, 0, sizeof(wavHeader));
 
+#ifdef ESP32
     f.seek(0, SeekSet);
+#else
+    f.seek(0);
+#endif
     f.read(wavHeader.wavHdr, 44);
 
     /* avoid watchdog */
@@ -407,7 +454,22 @@ uint32_t PatchManager_LoadWavefile(fs::FS &fs, char *filename, int16_t *buffer, 
 
     if (wavHeader.numberOfChannels == 1)
     {
+#ifdef ESP32
         f.read((uint8_t *)buffer, wavHeader.dataSize);
+#else
+        uint32_t leftSize = wavHeader.dataSize;
+        uint32_t bin = 0;
+        while (leftSize > 256)
+        {
+            f.read((uint8_t *)&buffer[bin], 256);
+            bin += 128; // because its int16 takes to bytes
+            leftSize -= 256;
+        }
+        if (leftSize > 0)
+        {
+            f.read((uint8_t *)&buffer[bin], leftSize);
+        }
+#endif
         bufferIn += wavHeader.dataSize;
     }
     else
@@ -460,7 +522,7 @@ uint32_t PatchManager_LoadWavefile(fs::FS &fs, char *filename, int16_t *buffer, 
     return bufferIn / sizeof(int16_t);
 }
 
-void PatchManager_CreateDir(fs::FS &fs, const char *path)
+static void PatchManager_CreateDir(FST &fs, const char *path)
 {
     Serial.printf("Creating Dir: %s\n", path);
     if (fs.mkdir(path))
@@ -475,14 +537,18 @@ void PatchManager_CreateDir(fs::FS &fs, const char *path)
 
 bool PatchManager_PrepareSdCard(void)
 {
-
+#ifdef ESP32
     if (!SD_MMC.begin("/sdcard", true)) /* makes less noise on recording! */
+#else
+    if (!card.init(SD_DETECT_NONE))
+#endif
     {
         Status_LogMessage("Card Mount Failed");
         delay(1000);
         return false;
     }
 
+#ifdef ESP32
     uint8_t cardType = SD_MMC.cardType();
 
     if (cardType == CARD_NONE)
@@ -509,10 +575,12 @@ bool PatchManager_PrepareSdCard(void)
     {
         Status_LogMessage("Card Access: UNKNOWN");
     }
+#endif
 
     return true;
 }
 
+#ifdef ESP32
 bool PatchManager_PrepareLittleFs(void)
 {
     if (!LittleFS.begin())
@@ -523,8 +591,9 @@ bool PatchManager_PrepareLittleFs(void)
 
     return true;
 }
+#endif
 
-void PatchManager_SavePatchParam(fs::FS &fs, char *filename, struct patchParam_s *patchParam)
+static void PatchManager_SavePatchParam(FST &fs, char *filename, struct patchParam_s *patchParam)
 {
     File f = fs.open(filename, FILE_WRITE);
     if (!f)
@@ -538,7 +607,7 @@ void PatchManager_SavePatchParam(fs::FS &fs, char *filename, struct patchParam_s
     f.close();
 }
 
-void PatchManager_LoadPatchParam(fs::FS &fs, char *filename, struct patchParam_s *patchParam)
+static void PatchManager_LoadPatchParam(FST &fs, char *filename, struct patchParam_s *patchParam)
 {
     File f = fs.open(filename, FILE_READ);
     if (!f)
@@ -599,7 +668,7 @@ void PatchManager_SetDestination(uint8_t destination, float value)
     }
 }
 
-void PatchManager_CreateNewFileNames(fs::FS &fs)
+static void PatchManager_CreateNewFileNames(FST &fs)
 {
 
     int i = 0;
@@ -635,7 +704,9 @@ void PatchManager_SaveNewPatch(struct patchParam_s *patchParam, int16_t *buffer,
             PatchManager_CreateNewFileNames(SD_MMC);
             PatchManager_SavePatchParam(SD_MMC, parNewFileName, patchParam);
             PatchManager_SaveWavefile(SD_MMC, wavNewFileName, buffer, bufferSize);
+#ifdef ESP32
             SD_MMC.end();
+#endif
 #ifdef PATCHMANAGER_DEBUG
             Serial.printf("Written %d to %s on SD_MMC\n", bufferSize, wavFileName);
 #else
@@ -643,6 +714,7 @@ void PatchManager_SaveNewPatch(struct patchParam_s *patchParam, int16_t *buffer,
 #endif
         }
     }
+#ifdef ESP32
     else
     {
         if (PatchManager_PrepareLittleFs())
@@ -659,6 +731,7 @@ void PatchManager_SaveNewPatch(struct patchParam_s *patchParam, int16_t *buffer,
 #endif
         }
     }
+#endif
 }
 
 void PatchManager_SetFilename(const char *filename)
@@ -681,7 +754,9 @@ uint32_t PatchManager_LoadPatch(struct patchParam_s *patchParam, int16_t *buffer
             PatchManager_LoadPatchParam(SD_MMC, currentFileNameBin, patchParam);
 
             readBufferBytes = PatchManager_LoadWavefile(SD_MMC, currentFileNameWav, buffer, bufferSize);
+#ifdef ESP32
             SD_MMC.end();
+#endif
 #ifdef PATCHMANAGER_DEBUG
             Serial.printf("Read %d from %s on SD_MMC\n", readBufferBytes, currentFileNameWav);
 #else
@@ -689,6 +764,7 @@ uint32_t PatchManager_LoadPatch(struct patchParam_s *patchParam, int16_t *buffer
 #endif
         }
     }
+#ifdef ESP32
     else
     {
         if (PatchManager_PrepareLittleFs())
@@ -704,6 +780,7 @@ uint32_t PatchManager_LoadPatch(struct patchParam_s *patchParam, int16_t *buffer
 #endif
         }
     }
+#endif
 
     memcpy(patchParam->filename, currentFileNameBin, sizeof(patchParam->filename));
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Marcel Licence
+ * Copyright (c) 2022 Marcel Licence
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -61,7 +61,7 @@
 #endif
 
 #ifdef ARDUINO_DAISY_SEED
-#include "DaisyDuino.h"
+#include "DaisyDuino.h" /* https://github.com/marcel-licence/DaisyDuino.git */
 #endif
 
 #ifdef ARDUINO_RASPBERRY_PI_PICO
