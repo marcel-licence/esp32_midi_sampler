@@ -450,7 +450,7 @@ void Sampler_Process(float *signal_l, float *signal_r, const int buffLen)
 
                 if (player->pressed)
                 {
-                    float sampleLen = player->sample_rec->loop_end - player->sample_rec->loop_start + 1;
+                    float sampleLen = player->sample_rec->loop_end - player->sample_rec->loop_start;
                     /*
                      * sampleLen = 34896
                      *
@@ -473,7 +473,7 @@ void Sampler_Process(float *signal_l, float *signal_r, const int buffLen)
 
                 /* stop playback when end has been reached */
                 /* stop playback when signal is not audible anymore */
-                if ((player->pos > player->sample_rec->end) || (player->adsr_gain < AUDIBLE_LIMIT))
+                if ((player->pos >= player->sample_rec->end) || (player->adsr_gain < AUDIBLE_LIMIT))
                 {
                     player->playing = false;
                     player->slow += sample_f;

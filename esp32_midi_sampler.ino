@@ -250,6 +250,7 @@ void setup()
     /* finally we can preload some data if available */
     PatchManager_SetDestination(0, 1);
     Sampler_LoadPatchFile("/samples/pet_bottle.wav");
+    Sampler_LoadPatchFile("/samples/sine_plug.wav");
 #endif
 
     /* select sd card */
@@ -264,6 +265,13 @@ void setup()
     /* use this to easily test the output */
 #ifdef NOTE_ON_AFTER_SETUP
     Sampler_NoteOn(0, 64, 1);
+#endif
+
+#ifdef MIDI_STREAM_PLAYER_ENABLED
+    MidiStreamPlayer_Init();
+    //char midiFile[] = "/esp32_sampler_demo.mid";
+    char midiFile[] = "/esp32_sampler_demo2.mid";
+    MidiStreamPlayer_PlayMidiFile_fromLittleFS(midiFile, 2);
 #endif
 
 #ifdef AS5600_ENABLED
@@ -640,6 +648,10 @@ void loop()
      * doing midi only 64 times per sample cycle
      */
     Midi_Process();
+
+#ifdef MIDI_STREAM_PLAYER_ENABLED
+    MidiStreamPlayer_Tick(SAMPLE_BUFFER_SIZE);
+#endif
 }
 
 uint8_t baseKey = 64 + 12 + 7; // c

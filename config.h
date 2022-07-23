@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Marcel Licence
+ * Copyright (c) 2022 Marcel Licence
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -94,6 +94,8 @@
  * It shares the I2C with the AS5600
  */
 //#define OLED_OSC_DISP_ENABLED
+
+//#define MIDI_STREAM_PLAYER_ENABLED /* activate this to use the midi stream playback module */
 
 /*
  * Following define enables the AS5600 processing (for scratching)

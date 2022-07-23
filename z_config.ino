@@ -70,8 +70,13 @@ struct midiControllerMapping edirolMapping[] =
     { 0x2, 0x50, "A3", NULL, Sampler_ScratchFader, 2},
     { 0x3, 0x50, "A4", NULL, Sampler_SetScratchSample, 0xFF},
 #else
+#ifdef MIDI_STREAM_PLAYER_ENABLED
+    { 0x2, 0x50, "A3", NULL, MidiStreamPlayerCtrl, MIDI_STREAM_PLAYER_CTRL_PAUSE},
+    { 0x3, 0x50, "A4", NULL, MidiStreamPlayerCtrl, MIDI_STREAM_PLAYER_CTRL_START},
+#else
     { 0x2, 0x50, "A3", NULL, NULL, 2},
     { 0x3, 0x50, "A4", NULL, NULL, 3},
+#endif
 #endif
 
     { 0x4, 0x50, "A5", NULL, PatchManager_SetDestination, 0},
