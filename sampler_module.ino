@@ -187,17 +187,50 @@ void Sampler_Init(void)
     Serial.printf("Total PSRAM: %d\n", ESP.getPsramSize());
     Serial.printf("Free PSRAM: %d\n", ESP.getFreePsram());
 
-    sampleStorageLen = ESP.getFreePsram() / sizeof(int16_t);
+    if (ESP.getPsramSize() == 0)
+    {
+        Serial.printf("PSRAM is not available! Please ensure PSRAM is enabled and also available on your ESP32");
+        while (true)
+        {
+            delay(1);
+        }
+    }
 
-    sampleStorage = (int16_t *)ps_malloc(sampleStorageLen * sizeof(int16_t));
+    if (ESP.getFreePsram() == 0)
+    {
+        Serial.printf("PSRAM has no free Memory! Please ensure PSRAM is enabled and also available on your ESP32");
+        while (true)
+        {
+            delay(1);
+        }
+    }
+
+    sampleStorageLen = ESP.getFreePsram() / sizeof(int16_t);
+    uint32_t sampleStorageBytes = sampleStorageLen * sizeof(int16_t);
+
+    Serial.printf("Try to allocate %d bytes\n", sampleStorageBytes);
+
+    sampleStorage = (int16_t *)ps_calloc(sampleStorageLen, sizeof(int16_t));
     if (sampleStorage == NULL)
     {
-        Serial.printf("not enough PSRAM memory for sampleStorage!\n");
+        Serial.printf("Not able to allocate the complete PSRAM buffer!\nNow trying to reduce the allocation buffer size");
+
+        /*
+         * for some reason using a newer ESP32 board library you cannot allocate the complete PSRAM memory
+         * this loop will decrease the buffer size and repeat the allocation step again until it is successful
+         */
+        while ((sampleStorage == NULL))
+        {
+            sampleStorageLen -= 1;
+            sampleStorageBytes = sampleStorageLen * sizeof(int16_t);
+            sampleStorage = (int16_t *)ps_calloc(sampleStorageLen, sizeof(int16_t));
+        }
     }
 
     Serial.printf("Total PSRAM: %d\n", ESP.getPsramSize());
     Serial.printf("Free PSRAM: %d\n", ESP.getFreePsram());
 
+    Serial.printf("Allocated %d bytes\n", sampleStorageBytes);
     Serial.printf("sampleStorageLen: %d\n", sampleStorageLen);
     Serial.printf("sampleStorageLen: %0.2fs\n", ((float)sampleStorageLen) / ((float)SAMPLE_RATE));
 
