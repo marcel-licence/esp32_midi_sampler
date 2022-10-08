@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Marcel Licence
+ * Copyright (c) 2022 Marcel Licence
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -53,6 +53,10 @@
  * a uart compatible signal
  */
 
+#ifndef MIDI_SERIAL_BAUDRATE
+#define MIDI_SERIAL_BAUDRATE 115200 /* guess using the serial port baudrate */
+#endif
+
 #ifndef MIDI_SERIAL1_BAUDRATE
 #define MIDI_SERIAL1_BAUDRATE   31250
 #endif
@@ -89,10 +93,15 @@ struct midi_port_s
 HardwareSerial Serial2(USART1);
 #endif
 
+#if (defined ARDUINO_GENERIC_F407VGTX) // || (defined ARDUINO_DISCO_F407VG)
+HardwareSerial Serial2(USART2); /* PA3 */
+#endif
+
+#if 0
 #ifdef ARDUINO_GENERIC_F407VGTX
 HardwareSerial Serial2(USART3); /* PB11 */
 #endif
-
+#endif
 
 #ifdef MIDI_PORT_ACTIVE
 struct midi_port_s MidiPort;
@@ -215,7 +224,7 @@ inline void Midi_ControlChange(uint8_t channel, uint8_t data1, uint8_t data2)
 
 inline void Midi_PitchBend(uint8_t ch, uint16_t bend)
 {
-    float value = ((float)bend - 8192.0f) * (1.0f / 8192.0f) - 1.0f;
+    float value = ((float)bend - 8192.0f) * (1.0f / 8192.0f);
     if (midiMapping.pitchBend != NULL)
     {
         midiMapping.pitchBend(ch, value);
@@ -259,7 +268,7 @@ inline void Midi_HandleShortMsg(uint8_t *data, uint8_t cable __attribute__((unus
         break;
     /* pitchbend */
     case 0xe0:
-        Midi_PitchBend(ch, ((((uint16_t)data[1])) + ((uint16_t)data[2] << 8)));
+        Midi_PitchBend(ch, ((((uint16_t)data[1])) + ((uint16_t)data[2] << 7)));
         break;
     /* song position pointer */
     case 0xf2:
@@ -288,6 +297,7 @@ void Midi_Setup()
 {
 #ifdef MIDI_RECV_FROM_SERIAL
     MidiPort.serial = &Serial;
+    Serial.printf("MIDI listen on Serial with %d baud\n", MIDI_SERIAL_BAUDRATE);
 #endif /* MIDI_RECV_FROM_SERIAL */
 
 #ifdef MIDI_PORT_ACTIVE
@@ -348,6 +358,10 @@ void Midi_Setup()
     Midi_PortSetup(&MidiPort2);
     Serial.printf("Setup MidiPort2 using Serial2\n");
 #endif /* MIDI_PORT2_ACTIVE */
+
+#ifdef USB_MIDI_ENABLED
+    UbsMidiSetup();
+#endif
 }
 
 void Midi_CheckMidiPort(struct midi_port_s *port)
@@ -433,20 +447,22 @@ void Midi_Process()
 #ifdef MIDI_PORT2_ACTIVE
     Midi_CheckMidiPort(&MidiPort2);
 #endif
+#ifdef USB_MIDI_ENABLED
+    UbsMidiLoop();
+#endif
 }
 
 #ifndef ARDUINO_SEEED_XIAO_M0
 #ifndef SWAP_SERIAL
+#ifdef MIDI_TX2_PIN
 void Midi_SendShortMessage(uint8_t *msg)
 {
-#ifdef MIDI_TX2_PIN
     MidiPort2.serial->write(msg, 3);
-#endif
 }
 
 void Midi_SendRaw(uint8_t *msg)
 {
-#ifdef MIDI_TX2_PIN
+
     /* sysex */
     if (msg[0] == 0xF0)
     {
@@ -461,8 +477,8 @@ void Midi_SendRaw(uint8_t *msg)
     {
         MidiPort2.serial->write(msg, 3);
     }
-#endif
 }
+#endif /* MIDI_TX2_PIN */
 #endif
 #endif
 

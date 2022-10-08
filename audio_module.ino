@@ -220,7 +220,7 @@ void ProcessAudio(uint16_t *buff, size_t len)
 
 #endif
 
-void Audio_OutputMono(int32_t *samples)
+void Audio_OutputMono(const int32_t *samples)
 {
 #ifdef ESP8266
     for (int i = 0; i < SAMPLE_BUFFER_SIZE; i++)
@@ -316,7 +316,7 @@ void Audio_OutputMono(int32_t *samples)
     memcpy(u32buf, samples, sizeof(int32_t)*SAMPLE_BUFFER_SIZE);
 #endif /* ARDUINO_SEEED_XIAO_M0 */
 
-#ifdef ARDUINO_RASPBERRY_PI_PICO
+#if (defined ARDUINO_RASPBERRY_PI_PICO) || (defined ARDUINO_GENERIC_RP2040)
     /*
      * @see https://arduino-pico.readthedocs.io/en/latest/i2s.html
      * @see https://www.waveshare.com/pico-audio.htm for connections
@@ -339,7 +339,7 @@ void Audio_OutputMono(int32_t *samples)
     memcpy(u16int_buf, u16int, sizeof(u16int));
     I2S.write(u16int_buf, sizeof(u16int));
 #endif
-#endif /* ARDUINO_RASPBERRY_PI_PICO */
+#endif /* ARDUINO_RASPBERRY_PI_PICO, ARDUINO_GENERIC_RP2040 */
 
 #ifdef ARDUINO_GENERIC_F407VGTX
     /*
@@ -360,9 +360,13 @@ void Audio_OutputMono(int32_t *samples)
     }
 #endif
 #endif /* ARDUINO_GENERIC_F407VGTX */
+
+#ifdef ARDUINO_DISCO_F407VG
+    STM32_AudioWriteS16(samples);
+#endif
 }
 
-#if (defined ESP32) || (defined TEENSYDUINO) || (defined ARDUINO_DAISY_SEED) || (defined ARDUINO_GENERIC_F407VGTX)
+#if (defined ESP32) || (defined TEENSYDUINO) || (defined ARDUINO_DAISY_SEED) || (defined ARDUINO_GENERIC_F407VGTX) || (defined ARDUINO_DISCO_F407VG) || (defined ARDUINO_BLACK_F407VE)
 void Audio_Input(float *left, float *right)
 {
 #ifdef ESP32
@@ -370,8 +374,26 @@ void Audio_Input(float *left, float *right)
 #endif /* ESP32 */
 }
 
+#ifdef OUTPUT_SAW_TEST
 void Audio_Output(float *left, float *right)
+#else
+void Audio_Output(const float *left, const float *right)
+#endif
 {
+#ifdef OUTPUT_SAW_TEST
+    /*
+     * base frequency: SAMPLE_FREQ / SAMPLE_BUFFER_SIZE
+     * for example: Fs : 44100Hz, Lsb = 48 -> Freq: 918.75 Hz
+     */
+    for (int i = 0; i < SAMPLE_BUFFER_SIZE; i++)
+    {
+        left[i] = ((float)i * 2.0f) / ((float)SAMPLE_BUFFER_SIZE);
+        right[i] = ((float)i * 2.0f) / ((float)SAMPLE_BUFFER_SIZE);
+        left[i] -= 1.0f;
+        right[i] -= 1.0f;
+    }
+#endif
+
 #ifdef ESP32
     i2s_write_stereo_samples_buff(left, right, SAMPLE_BUFFER_SIZE);
 #endif /* ESP32 */
@@ -428,17 +450,21 @@ void Audio_Output(float *left, float *right)
     memcpy(out_temp[0], left, sizeof(out_temp[0]));
     memcpy(out_temp[1], right, sizeof(out_temp[1]));
 
-
     dataReady = false;
 
 #endif /* ARDUINO_DAISY_SEED */
 
 #ifdef ARDUINO_GENERIC_F407VGTX
-    /*
-     * Todo Implementation for the STM32F407VGT6
-     * Can be found on the ST Discovery Board
-     */
+
+    STM32_AudioWrite(left, right);
+
+#endif /* ARDUINO_GENERIC_F407VGTX */
+
+#ifdef ARDUINO_DISCO_F407VG
+
+    STM32_AudioWrite(left, right);
+
 #endif /* ARDUINO_GENERIC_F407VGTX */
 }
-#endif /* (defined ESP32) || (defined TEENSYDUINO) || (defined ARDUINO_DAISY_SEED) || (defined ARDUINO_GENERIC_F407VGTX) */
+#endif /* (defined ESP32) || (defined TEENSYDUINO) || (defined ARDUINO_DAISY_SEED) || (defined ARDUINO_GENERIC_F407VGTX) || (defined ARDUINO_DISCO_F407VG) */
 

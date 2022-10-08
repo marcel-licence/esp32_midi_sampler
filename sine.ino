@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Marcel Licence
+ * Copyright (c) 2022 Marcel Licence
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -45,10 +45,11 @@ float *sine = NULL;
 
 void Sine_Init(void)
 {
-    sine = (float *)malloc(sizeof(float) * SINE_CNT);
+    uint32_t memSize = sizeof(float) * SINE_CNT;
+    sine = (float *)malloc(memSize);
     if (sine == NULL)
     {
-        Serial.printf("not enough heap memory for sine buffer!\n");
+        Serial.printf("not enough heap memory for sine %d buffer!\n", memSize);
     }
     for (int i = 0; i < SINE_CNT; i++)
     {
@@ -63,4 +64,9 @@ float SineNorm(float alpha_div2pi)
 {
     uint32_t index = ((uint32_t)(alpha_div2pi * ((float)SINE_CNT))) % SINE_CNT;
     return sine[index];
+}
+
+float SineNormU32(uint32_t pos)
+{
+    return sine[SINE_I(pos)];
 }
