@@ -212,7 +212,6 @@ void Status_Process_Sample(uint32_t inc)
 
 void Status_Process(void)
 {
-
 #ifndef VT100_ENABLED
     if (triggerTerminalOutput)
 #endif
