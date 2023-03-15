@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Marcel Licence
+ * Copyright (c) 2023 Marcel Licence
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -47,12 +47,23 @@
 #define CONFIG_H_
 
 
+#ifdef __CDT_PARSER__
+#include <cdt.h>
+#endif
+
+
+#define SERIAL_BAUDRATE 115200
+
 //#define NOTE_ON_AFTER_SETUP /* used to get a test tone without MIDI input. Can be deactivated */
 
-
-//#define BOARD_ML_V1 /* activate this when using the ML PCB V1 */
+/*
+ * you can select one of the pre-defined boards
+ * look into ML_SynthTools in ml_boards.h for more information
+ * @see https://github.com/marcel-licence/ML_SynthTools
+ */
+#define BOARD_ML_V1 /* activate this when using the ML PCB V1 */
 //#define BOARD_ESP32_AUDIO_KIT_AC101 /* activate this when using the ESP32 Audio Kit v2.2 with the AC101 codec */
-#define BOARD_ESP32_AUDIO_KIT_ES8388 /* activate this when using the ESP32 Audio Kit v2.2 with the ES8388 codec */
+//#define BOARD_ESP32_AUDIO_KIT_ES8388 /* activate this when using the ESP32 Audio Kit v2.2 with the ES8388 codec */
 //#define BOARD_ESP32_DOIT /* activate this when using the DOIT ESP32 DEVKIT V1 board */
 
 /* can be used to pass line in through audio processing to output */

@@ -143,6 +143,7 @@ struct midiMapping_s midiMapping =
     Sampler_NoteOff,
     Sampler_PitchBend,
     Sampler_ModulationWheel,
+    NULL, /* assign program change callback here! */
     Synth_RealTimeMsg,
     Synth_SongPosition,
     edirolMapping,
