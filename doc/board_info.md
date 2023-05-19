@@ -7,7 +7,7 @@ Below you will find a list of build which can be configured and should compile w
 <b>Version:</b> 1.0.6<br />
 <b>Board:</b> ESP32 Dev Module<br />
 <br />
-<b>Program storage space:</b> 890422 bytes<br />
+<b>Program storage space:</b> 890570 bytes<br />
 <b>Dynamic memory:</b> 121080 bytes<br />
 <br />
 <b>PSRAM:</b> Enabled<br />
