@@ -48,7 +48,13 @@ Thumbs.db
 *.mov
 *.wmv
 
-/arduino_build
-/arduino_cache
-*.project
-*.cproject
+arduino_build
+arduino_cache
+bld*
+*build
+/.cproject
+/.project
+
+*.bat
+makefile*
+*.mk
