@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Marcel Licence
+ * Copyright (c) 2023 Marcel Licence
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -34,10 +34,10 @@
 
 struct gimpImg_s
 {
-    unsigned int     width;
-    unsigned int     height;
-    unsigned int     bytes_per_pixel; /* 2:RGB16, 3:RGB, 4:RGBA */
-    unsigned char    pixel_data[160 * 80 * 2 + 1];
+    unsigned int width;
+    unsigned int height;
+    unsigned int bytes_per_pixel; /* 2:RGB16, 3:RGB, 4:RGBA */
+    unsigned char pixel_data[160 * 80 * 2 + 1];
 };
 
 static const struct gimpImg_s gimp_image_ml PROGMEM =

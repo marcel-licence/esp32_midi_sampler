@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Marcel Licence
+ * Copyright (c) 2023 Marcel Licence
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -232,6 +232,18 @@ void Status_Process(void)
 /*
  * update top line message including a float value
  */
+void Status_ValueChangedFloat(const char *group, const char *descr, float value)
+{
+    statusMsgShowTimer = 0;
+    sprintf(statusMsg, "%s - %s: %0.3f", group, descr, value);
+#ifndef AS5600_ENABLED
+    triggerTerminalOutput = true;
+#ifdef SCREEN_ENABLED
+    Screen_Update();
+#endif
+#endif
+}
+
 void Status_ValueChangedFloat(const char *descr, float value)
 {
     statusMsgShowTimer = 0;
@@ -247,6 +259,18 @@ void Status_ValueChangedFloat(const char *descr, float value)
 /*
  * update top line message including an integer value
  */
+void Status_ValueChangedInt(const char *group, const char *descr, int value)
+{
+    statusMsgShowTimer = 0;
+    sprintf(statusMsg, "%s - %s: %d", group, descr, value);
+#ifndef AS5600_ENABLED
+    triggerTerminalOutput = true;
+#ifdef SCREEN_ENABLED
+    Screen_Update();
+#endif
+#endif
+}
+
 void Status_ValueChangedInt(const char *descr, int value)
 {
     statusMsgShowTimer = 0;

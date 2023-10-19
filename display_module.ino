@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Marcel Licence
+ * Copyright (c) 2023 Marcel Licence
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -87,7 +87,6 @@ static volatile int curOffset = 0;
 #define PWM_Ch 1
 
 
-
 void drawRGBBitmapP(int16_t x, int16_t y, PGM_VOID_P bitmap,
                     int16_t w, int16_t h)
 {
@@ -100,7 +99,6 @@ void drawRGBBitmapP(int16_t x, int16_t y, PGM_VOID_P bitmap,
 }
 
 
-
 void Display_Setup()
 {
     display_header[0] = 0;
@@ -108,7 +106,7 @@ void Display_Setup()
 
     DispSpi.begin(TFT_SCLK, -1, TFT_MOSI);
 
-    tft.initR(INITR_096_160x80_IPS);  // Init ST7735S mini display
+    tft.initR(INITR_096_160x80_IPS); // Init ST7735S mini display
     //tft.setRotation(3); // set display orientation
     tft.setRotation(1); // set display orientation
 
@@ -183,8 +181,7 @@ void Display_Draw()
     {
         //for (int n = 0; n<7; n++)
         {
-            //  curSel = n;
-
+            // curSel = n;
 
 
             Serial.printf("redraw %d\n", curSel);
@@ -302,7 +299,7 @@ void testdrawtext(const char *text, uint16_t color, uint16_t bg)
     tft.setTextColor(color, bg);
     tft.setTextWrap(true);
 
-    char textLine[]  = "                          ";
+    char textLine[] = "                          ";
     memcpy(textLine, text, strlen(text));
 
     tft.print(textLine);
@@ -314,7 +311,7 @@ void testdrawtextline(char *text, uint16_t color, uint16_t bg, uint8_t line)
     tft.setTextColor(color, bg);
     tft.setTextWrap(true);
 
-    char textLine[]  = "                          ";
+    char textLine[] = "                          ";
     memcpy(textLine, text, strlen(text));
 
     tft.print(textLine);

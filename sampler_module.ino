@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Marcel Licence
+ * Copyright (c) 2023 Marcel Licence
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -225,7 +225,7 @@ float FrequencyFromVoice(struct sample_record_s *const voice, float note)
 #endif
 
     note += pitchBendValue + Modulation();
-    float f = ((pow(2.0f, note / 12.0f)));   /* no frequency so dont use * 440.0f */
+    float f = ((pow(2.0f, note / 12.0f))); /* no frequency so dont use * 440.0f */
     return f;
 }
 
@@ -846,7 +846,7 @@ void Sampler_LoopRemove(uint8_t index, float value)
 
 void Sampler_SetLoopEndMultiplier(uint8_t quarter, float value)
 {
-    int loop_end_mul_i = 1 + ((value) * 127.0f);  /* 128 octaves */
+    int loop_end_mul_i = 1 + ((value) * 127.0f); /* 128 octaves */
     loop_end_mul = loop_end_mul_i;
     Sampler_UpdateLoopRange();
     if (lastActiveRec != NULL)
@@ -1077,7 +1077,7 @@ void Sampler_LoadPatch(uint8_t unused, float value)
             lastIn = sampleStorageInPos;
             sampleStorageInPos += newSampleLen;
 
-            Status_ValueChangedInt("Loaded sample",  newPatch->end -  newPatch->start);
+            Status_ValueChangedInt("Loaded sample", newPatch->end - newPatch->start);
 
             /* select new recorded sample */
             lastActiveRec = newPatch;
@@ -1139,7 +1139,7 @@ void Sampler_SetRecordDoneCallback(void(*callback)(void))
     sampler_recordDoneCb = callback;
 }
 
-void Sampler_AddSection(float pitch_keycenter, uint32_t  offset, uint32_t  end, uint32_t  loop_start, uint32_t loop_end, const char *soundName)
+void Sampler_AddSection(float pitch_keycenter, uint32_t offset, uint32_t end, uint32_t loop_start, uint32_t loop_end, const char *soundName)
 {
     struct sample_record_s *newPatch = &sampleRecords[sampleRecordCount];
     sampleRecordCount++;
@@ -1151,7 +1151,7 @@ void Sampler_AddSection(float pitch_keycenter, uint32_t  offset, uint32_t  end, 
     newPatch->start = lastIn + offset;
     newPatch->end = lastIn + end;
 
-    if ((offset ==  loop_start) && (end == (loop_end + 1)))
+    if ((offset == loop_start) && (end == (loop_end + 1)))
     {
         newPatch->loop_start = 0;
         newPatch->loop_end = 0xFFFFFFFF;

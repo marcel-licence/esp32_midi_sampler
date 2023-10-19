@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Marcel Licence
+ * Copyright (c) 2023 Marcel Licence
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -38,7 +38,6 @@
  */
 
 
-
 #define VU_METER_COUNT  8
 
 #define VU_METER_DECREASE_MULTIPLIER 0.98f
@@ -52,9 +51,6 @@ uint32_t brightness = 4; /* I am using a low value to keep the LED's dark */
 
 /* pixel count of the 8x8 module */
 #define NUMPIXELS   (8*8)
-
-
-
 
 
 struct pixel_rgb
@@ -162,7 +158,7 @@ void VuMeterMatrix_Display(void)
         {
             dbVal = 8.0f;
         }
-        else if (vuMeterValueDisp[row] > 0.0f)   /* log would crash if you put in zero */
+        else if (vuMeterValueDisp[row] > 0.0f) /* log would crash if you put in zero */
         {
             dbVal = 8 + (3.32f * log10(vuMeterValueDisp[row]));
         }
@@ -170,7 +166,7 @@ void VuMeterMatrix_Display(void)
         if (dbVal > col)
         {
             uint8_t colors[3];
-            float hue = 120.0f - ((float)dbVal) * (120.0f / 8.0f);  /* from green to red / min to max */
+            float hue = 120.0f - ((float)dbVal) * (120.0f / 8.0f); /* from green to red / min to max */
             HSVtoRGB(hue, 255, brightness, colors);
 
             pixels[i].r = colors[0];

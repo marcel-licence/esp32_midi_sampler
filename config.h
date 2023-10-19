@@ -159,7 +159,6 @@
 //#define DISPLAY_160x80_ENABLED /* activate this when a 160x80 ST7735 compatible display is connected */
 
 
-
 #ifdef DISPLAY_160x80_ENABLED
 #define SCREEN_ENABLED
 

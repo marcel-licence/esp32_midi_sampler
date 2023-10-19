@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Marcel Licence
+ * Copyright (c) 2023 Marcel Licence
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -710,7 +710,7 @@ void PatchManager_SaveNewPatch(struct patchParam_s *patchParam, int16_t *buffer,
 #ifdef PATCHMANAGER_DEBUG
             Serial.printf("Written %d to %s on SD_MMC\n", bufferSize, wavFileName);
 #else
-            Status_ValueChangedInt("Written to SD_MMC",  bufferSize);
+            Status_ValueChangedInt("Written to SD_MMC", bufferSize);
 #endif
         }
     }
@@ -727,7 +727,7 @@ void PatchManager_SaveNewPatch(struct patchParam_s *patchParam, int16_t *buffer,
 #ifdef PATCHMANAGER_DEBUG
             Serial.printf("Written %d to %s on LittleFS\n", bufferSize, wavFileName);
 #else
-            Status_ValueChangedInt("Written to LittleFS",  bufferSize);
+            Status_ValueChangedInt("Written to LittleFS", bufferSize);
 #endif
         }
     }
@@ -760,7 +760,7 @@ uint32_t PatchManager_LoadPatch(struct patchParam_s *patchParam, int16_t *buffer
 #ifdef PATCHMANAGER_DEBUG
             Serial.printf("Read %d from %s on SD_MMC\n", readBufferBytes, currentFileNameWav);
 #else
-            Status_ValueChangedInt("Read from SD_MMC",  readBufferBytes);
+            Status_ValueChangedInt("Read from SD_MMC", readBufferBytes);
 #endif
         }
     }
@@ -776,7 +776,7 @@ uint32_t PatchManager_LoadPatch(struct patchParam_s *patchParam, int16_t *buffer
 #ifdef PATCHMANAGER_DEBUG
             Serial.printf("Read %d from %s on LittleFS\n", readBufferBytes, currentFileNameWav);
 #else
-            Status_ValueChangedInt("Read from LittleFS",  readBufferBytes);
+            Status_ValueChangedInt("Read from LittleFS", readBufferBytes);
 #endif
         }
     }

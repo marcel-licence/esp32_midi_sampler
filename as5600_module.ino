@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 Marcel Licence
+ * Copyright (c) 2023 Marcel Licence
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -122,7 +122,7 @@ void AS5600_Loop()
     }
     else
     {
-        if (lastVal -  newVal > 0)
+        if (lastVal - newVal > 0)
         {
             valUpdate = true;
         }
@@ -162,7 +162,7 @@ float AS5600_GetPitch(uint8_t oversample)
     }
     if (pitch < -50)
     {
-        pitch  = -50;
+        pitch = -50;
     }
 
     for (int i = 0; i < oversample; i++)
