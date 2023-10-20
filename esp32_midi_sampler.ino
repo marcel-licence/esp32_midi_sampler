@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Marcel Licence
+ * Copyright (c) 2023 Marcel Licence
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -175,10 +175,9 @@ void setup()
     Serial.println();
 
 
-
 #ifdef AS5600_ENABLED
-    //  digitalWrite(TFT_CS, HIGH);
-    //  pinMode(TFT_CS, OUTPUT);
+    // digitalWrite(TFT_CS, HIGH);
+    // pinMode(TFT_CS, OUTPUT);
 
     Wire.setClock(I2C_SPEED);
 #endif
@@ -651,7 +650,7 @@ inline void audio_task()
      * add some mono reverb
      */
     Reverb_Process(fl_sample, SAMPLE_BUFFER_SIZE);
-    memcpy(fr_sample,  fl_sample, sizeof(fr_sample));
+    memcpy(fr_sample, fl_sample, sizeof(fr_sample));
 
     /*
      * apply master output gain
