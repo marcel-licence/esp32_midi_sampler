@@ -4,6 +4,11 @@ ESP32 Audio Kit Sampling MIDI Module - A little DIY Arduino based audio/synthesi
 - video presentation of the initial state of this project https://youtu.be/7uSobNW7_A4 
 - little quick start guide to get started with arduino synthesizer / music projects: https://youtu.be/ZNxGCB-d68g
 
+
+> **⚠️ Note:** This project might be outdated and is no longer actively maintained. Development has continued in a new repository, which covers the **ESP32** and other boards as well. Please check out the latest version of the project here: **[ml_synth_sampler_example](https://github.com/marcel-licence/ml_synth_sampler_example)**
+
+
+
 The project is written for the ESP32 Audio Kit V2.2
 Arduino Settings:
 - Board: ESP32 Dev Module
